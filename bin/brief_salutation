@@ -11,7 +11,7 @@ ALL RIGHTS RESERVED
 """
 
 import click
-from 3DChromatin.complex_module.core import salutation
+from Chromatin3d.complex_module.core import salutation
 
 
 @click.command()

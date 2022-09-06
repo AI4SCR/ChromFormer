@@ -8,7 +8,7 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "3DChromatin"
+name = "Chromatin3D"
 description = "This project aims to predict the shape of the Chromatin using Hi-C interaction matrices as input"
 authors = [
     { name = "Henry Valeyre", email = "hva@zurich.ibm.com" },
@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.scripts]
-salutation = "3DChromatin.complex_module.core:formal_introduction"
+##salutation = "Chromatin3D.complex_module.core:formal_introduction"
 
 [project.urls]
 repository = "https://github.ibm.com/AI4SCR-DEV/3D-Chromatin"

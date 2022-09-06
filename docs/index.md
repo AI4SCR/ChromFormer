@@ -6,7 +6,7 @@
 ---
 maxdepth: 1
 ---
-3DChromatin API <api/3DChromatin>
+Chromatin3D API <api/Chromatin3D>
 ```
 
 

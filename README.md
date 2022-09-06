@@ -3,7 +3,11 @@
 This project aims to predict the shape of the Chromatin using Hi-C interaction matrices as input
 
 ## Environment
-Using a virtual environment for all commands in this guide is strongly recommended.
+```sh
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip setuptools wheel
+```
 
 ## Installation
 
@@ -15,10 +19,8 @@ pip install "git+ssh://git@github.ibm.com/AI4SCR-DEV/3D-Chromatin.git@main"
 
 ### Suggested setup for development
 ```sh
-pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-pip install -r dev_requirements.txt
-pip install -e .
+pip install torch-scatter torch-sparse torch-geometric -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 pre-commit install
 ```
 

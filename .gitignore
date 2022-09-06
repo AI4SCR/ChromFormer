@@ -24,7 +24,11 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+# exclude everything in every folder
+/data/biological_trussart_uniform/**/*.*
 
+# include only .gitkeep files
+!/data/biological_trussart_uniform/**/*.gitkeep
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -83,6 +87,8 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
+3dChromenv/
+.3dChromenv
 .env
 .venv
 env/

@@ -3,7 +3,7 @@
 this is taken from the [MyST page](https://myst-parser.readthedocs.io/en/latest/index.html) as example
 ```
 ```{todo}
-Document your own API ({py:mod}`3DChromatin`) and delete this example file!
+Document your own API ({py:mod}`Chromatin3D`) and delete this example file!
 ```
 
 ```{note}
