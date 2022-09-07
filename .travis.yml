@@ -65,11 +65,3 @@ jobs:
           on:
             branch: main
     
-
-# documented on https://docs.travis-ci.com/user/notifications/#configuring-slack-notifications
-notifications:
-  slack:
-    rooms:
-      - ibm-research:can-be-set-later-in-travis-file
-    on_success: always
-    on_failure: always
