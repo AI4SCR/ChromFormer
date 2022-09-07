@@ -31,14 +31,14 @@ script:
   ###- a_shell_script
   
   # run unit tests
-  - python -m pytest -sv --cov=$PACKAGE_NAME --cov-fail-under=65
+  ####- python -m pytest -sv --cov=$PACKAGE_NAME --cov-fail-under=65
 
   # static type checking
-  - python -m mypy $PACKAGE_NAME
+  ####- python -m mypy $PACKAGE_NAME
 
   # style checking
-  - python -m black $PACKAGE_NAME --check --diff --color
-  - python -m flake8 --per-file-ignores="__init__.py:F401" $PACKAGE_NAME
+  ####- python -m black $PACKAGE_NAME --check --diff --color
+  ####- python -m flake8 --per-file-ignores="__init__.py:F401" $PACKAGE_NAME
 
 # the following stages only start if the "test" stage above all succeed
 jobs:
