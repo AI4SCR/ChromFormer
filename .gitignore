@@ -26,9 +26,13 @@ wheels/
 MANIFEST
 # exclude everything in every folder
 /data/biological_trussart_uniform/**/*.*
+/data/biological_trussart/**/*.*
+/data/biological_trussart_special_values/**/*.*
 
 # include only .gitkeep files
 !/data/biological_trussart_uniform/**/*.gitkeep
+!/data/biological_trussart/**/*.gitkeep
+!/data/biological_trussart_special_values/**/*.gitkeep
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

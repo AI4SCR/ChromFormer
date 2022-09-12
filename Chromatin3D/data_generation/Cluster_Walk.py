@@ -9,19 +9,19 @@ ALL RIGHTS RESERVED
 
 from asyncio import constants
 import numpy as np
-from numpy import linalg as lanumpy
 from tqdm import tqdm
 from ..Data_Tools.Normalisation import centralize_and_normalize_numpy
 from scipy.spatial import distance_matrix
 from ..Data_Tools.Data_Calculation import generate_hic
 import pandas as pd
 from typing import Tuple
+import random
 
 
 class Stepper(object):
-    """Class that contains functions to generate the random angle or uniform vector cluster walk.
+    """Class that contains functions to generate the random angle
 
-    Generates the trajectory and the next step to take for the Cluster Walk. It contains the uniform walk that depends on vectors with the cube trick or angles phi and theta for 3D structures.
+    Generates the trajectory and the next step to take for the Cluster Walk. It contains the uniform walk that depends angles phi and theta for 3D structures.
 
     Args:
         delta: an integer that indicates how smooth the structure should be
@@ -29,16 +29,12 @@ class Stepper(object):
 
     def __init__(self, delta: int) -> None:
         """initialises the Stepper class"""
+
         self.delta = delta
         self.previous_theta = np.random.uniform(0, np.pi)
         self.previous_phi = np.random.uniform(0, 2 * np.pi)
         self.trajectory = [np.zeros(3)]
         self.sphere_center = np.zeros(3)
-        while True:
-            random_x_y_z = np.random.uniform(-1, 1, size=3)
-            if lanumpy.norm(random_x_y_z, ord=2) <= 1:
-                break
-        self.prev_vector = random_x_y_z / lanumpy.norm(random_x_y_z, ord=2)
 
     @property
     def pos(self) -> np.ndarray:
@@ -48,30 +44,6 @@ class Stepper(object):
             A numpy array 3D coordinates of the latest position
         """
         return self.trajectory[-1]
-
-    def __stepu(self, delta: int) -> Tuple[np.ndarray, np.ndarray]:
-        """Performs the sampling of a vector and 3D point for a uniform step in the trajectory.
-
-        Uniform step that uses the sphere in the cube trick, to generate a uniform vector that depends on the previous vector direction.
-        It as well keeps distances of point i and i+1 similar for all i.
-
-        Args:
-            delta: integer of value between 0 and 1 that represents how much the next direction depends on the previous direction
-
-        Returns:
-            The new position according to the selected vector
-            The generated directional vector
-        """
-        while True:
-            random_x_y_z = np.random.uniform(-1, 1, size=3)
-            if lanumpy.norm(random_x_y_z, ord=2) <= 1:
-                break
-        random_x_y_z = random_x_y_z / lanumpy.norm(random_x_y_z, ord=2)
-        x_vector = (1 - delta) * self.prev_vector + delta * random_x_y_z
-        x_vector = x_vector / lanumpy.norm(x_vector, ord=2)
-        pos = self.pos.copy()
-        pos += x_vector
-        return pos, x_vector
 
     def __step(self, delta: int) -> Tuple[np.ndarray, int, int]:
         """Step that uses the phi and delta angles to find the next 3D coordinates. Angles each depend to a certain degree of the previous angle.
@@ -85,9 +57,8 @@ class Stepper(object):
         """
         random_theta = np.random.uniform(0, np.pi)
         random_phi = np.random.uniform(0, 2 * np.pi)
-
-        new_theta = (1 - delta) * self.previous_theta + delta * random_theta
-        new_phi = (1 - delta) * self.previous_phi + delta * random_phi
+        new_theta = (1 - self.delta) * self.previous_theta + self.delta * random_theta
+        new_phi = (1 - self.delta) * self.previous_phi + self.delta * random_phi
 
         pos = self.pos.copy()
         pos[0] += np.cos(new_phi) * np.sin(new_theta)
@@ -114,10 +85,10 @@ class Stepper(object):
         """Function that creates a smooth step.
 
         Creates a smooth step by making sure that the step is contained in the main Gaussian structure sphere (main cluster) that we generated at the beginning with a certain variance
-        which specifies how condensed each points must be. Performs rejection sampling of points that do not follow the constrains. It as well takes in consideration if the vector is going in the good
+        which specifies how condensed each points must be. Performs rejection sampling of points that do not follow the constrains. It as well takes in consideration if the angles are going in the good
         direction in order not to be rejected as a sampled point.
 
-        Used if a vector based structure is being built.
+        Used if an angle based structure is being built.
 
         Args:
             sigma: integer representing the variance of the sphere
@@ -126,7 +97,7 @@ class Stepper(object):
             Numpy array of the coordinates of the latest position
         """
         while True:
-            new_pos, new_x_vector = self.__stepu(delta=self.delta)
+            new_pos, new_theta, new_phi = self.__step(delta=self.delta)
             random_u = np.random.random()
             if (self.sphere_center == self.pos).all() or random_u <= np.exp(
                 -((np.linalg.norm(new_pos - self.sphere_center) / sigma) ** 2)
@@ -145,7 +116,8 @@ class Stepper(object):
                 )
             ):
                 self.trajectory.append(new_pos)
-                self.prev_vector = new_x_vector
+                self.previous_theta = new_theta
+                self.previous_phi = new_phi
                 return self.pos
 
     def cluster_step(
@@ -154,7 +126,7 @@ class Stepper(object):
         """Creates a step in the trajectory, that is contained in a smaller cluster.
 
         With a certain probability we will enter a small cluster. These cluster generate a gaussian sphere (smaller clusters) with a new center and variance of how big or condensed points must be.
-        Performs rejection sampling of points that do not follow the constrains. It as well takes in consideration if the vector is going in the good direction in order not to be rejected as a sampled point.
+        Performs rejection sampling of points that do not follow the constrains. It as well takes in consideration if the angles are going in the good direction in order not to be rejected as a sampled point.
 
         Args:
             cluster_center: Array of the coordinates of the center of the cluster to which the points must be contained in
@@ -164,7 +136,7 @@ class Stepper(object):
             Array representing the new position under the gaussian small cluster constraints.
         """
         while True:
-            new_pos, new_x_vector = self.__stepu(delta=0.5)
+            new_pos, new_theta, new_phi = self.__step(delta=0.9)
             random_u = np.random.random()
             if (cluster_center == self.pos).all() or random_u <= np.exp(
                 -((np.linalg.norm(new_pos - cluster_center) / cluster_sigma) ** 2)
@@ -181,8 +153,8 @@ class Stepper(object):
                 )
             ):
                 self.trajectory.append(new_pos)
-                self.prev_vector = new_x_vector
-
+                self.previous_theta = new_theta
+                self.previous_phi = new_phi
                 return self.pos
 
 
@@ -228,13 +200,13 @@ def generate_biological_structure(
         else:
             center = stepper.pos.copy()
             aging = 30
-            for _ in range(30):
+            for _ in range(20):
                 stepper.cluster_step(center, cluster_sigma)
 
     return centralize_and_normalize_numpy(stepper.trajectory[:nb_nodes])
 
 
-def synthetic_biological_uniform_data_generator(
+def synthetic_biological_data_generator(
     rng,
     trussart_hic: np.ndarray,
     n_structure: int,
@@ -258,8 +230,8 @@ def synthetic_biological_uniform_data_generator(
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
     Arg:
-        rng: random state to pass to the optimal transport
-        trussart_hic: array of the trussart structure used as target for optimal transport
+        rng: random state
+        trussart_hic: None as not requires without optimal transport
         n_structure: integer for how many structures to creates in the dataset
         data_path: constant path to locate where the data should be saved outside the package
         nb_bins: integer for the number of points in the structure (HIC bins)
@@ -278,7 +250,6 @@ def synthetic_biological_uniform_data_generator(
         transportation: boolean that says if we are unsing optimal transport or not
         softmaxing: boolean that says if we should use the softmax function over thwe HIC matrix.
     """
-
     digits_format = "{0:0=4d}"
 
     if is_training:
@@ -327,7 +298,6 @@ def synthetic_biological_uniform_data_generator(
         )
 
         # Compute HiC matrix
-
         hic_matrix = generate_hic(
             rng,
             path,
@@ -341,11 +311,138 @@ def synthetic_biological_uniform_data_generator(
             exponent=alpha,
         )
 
+        # HiC matrix to file
         df = pd.DataFrame(data=hic_matrix.astype(float))
         df.to_csv(
             data_path
             + file_name
             + "/hic_matrices/biological_hic_"
+            + digits_format.format(i)
+            + ".txt",
+            sep=" ",
+            header=False,
+            index=False,
+        )
+
+
+def synthetic_biological_data_generator_special_values(
+    rng,
+    trussart_hic: np.ndarray,
+    n_structure: int,
+    data_path: constants,
+    nb_bins: int,
+    delta_ch: np.ndarray,
+    st_sig: int,
+    end_sig: int,
+    sig_ch: np.ndarray,
+    clust_sig: int,
+    clust_prob_ch: np.ndarray,
+    secondstep: bool,
+    seed: int,
+    alpha: int,
+    is_training: bool = True,
+    icing: bool = True,
+    minmaxuse: bool = False,
+    transportation: bool = True,
+    softmaxing: bool = False,
+) -> None:
+    """Function that creates the dataset of structures, distance matrix and HIC matrices.
+
+    Arg:
+        rng: random state
+        trussart_hic: None as not requires without optimal transport
+        n_structure: integer for how many structures to creates in the dataset
+        data_path: constant path to locate where the data should be saved outside the package
+        nb_bins: integer for the number of points in the structure (HIC bins)
+        delta_ch: array representing how smooth the function should be
+        st_sig: integer for the step2 first sigma period
+        end_sig: integer for the step2 second sigma period
+        sig_ch: array representing how big the main cluster for the whole structure. Shows how condensed the structure should be
+        clust_sig: integer representing the variance for the smaller cluster that defines how condensed the points must be
+        clust_prob_ch: array for the probability of obtaining a cluster
+        secondstep: a boolean that help to decide if their should be a change in the structure at some point
+        seed: integer for the seed to be set
+        alpha: integer representing the exponent to be used in the distance to hic matrices transformation
+        is_training: boolean that tells the function whether to save date in training or testing folder
+        icing: boolean that says if we are using ICE normalisation or not
+        minmaxuse: boolean that says if we are using MinMax scaling or not
+        transportation: boolean that says if we are unsing optimal transport or not
+        softmaxing: boolean that says if we should use the softmax function over thwe HIC matrix.
+    """
+    digits_format = "{0:0=4d}"
+
+    if is_training:
+        nb_structures = n_structure
+        file_name = "train"
+    else:
+        nb_structures = n_structure
+        file_name = "test"
+
+    for i in tqdm(range(0, nb_structures)):
+
+        choice = random.choice([0, 1, 2, 3])
+
+        path = generate_biological_structure(
+            nb_bins,
+            delta_ch[choice],
+            st_sig,
+            end_sig,
+            sig_ch[choice],
+            clust_sig,
+            random.choice(clust_prob_ch),
+            secondstep,
+        )
+        path = centralize_and_normalize_numpy(path)
+
+        # Structure matrix to file
+        df = pd.DataFrame(data=path.astype(float))
+        df.to_csv(
+            data_path
+            + file_name
+            + "/structure_matrices/biological_structure_special_values_"
+            + digits_format.format(i)
+            + ".txt",
+            sep=" ",
+            header=False,
+            index=False,
+        )
+
+        # Compute distance matrix
+        precomputed_distances = distance_matrix(path, path)
+
+        # Distance matrix to file
+        df = pd.DataFrame(data=precomputed_distances.astype(float))
+        df.to_csv(
+            data_path
+            + file_name
+            + "/distance_matrices/biological_distance_special_values_"
+            + digits_format.format(i)
+            + ".txt",
+            sep=" ",
+            header=False,
+            index=False,
+        )
+
+        # Compute HiC matrix
+        hic_matrix = generate_hic(
+            rng,
+            path,
+            trussart_hic,
+            use_ice=icing,
+            use_minmax=minmaxuse,
+            use_ot=transportation,
+            use_softmax=softmaxing,
+            seed=seed,
+            plot_optimal_transport=False,
+            exponent=alpha,
+        )
+
+        # HiC matrix to file
+        df = pd.DataFrame(data=hic_matrix.astype(float))
+        df.to_csv(
+            data_path
+            + file_name
+            + "/hic_matrices/biological_hic_special_values_"
             + digits_format.format(i)
             + ".txt",
             sep=" ",

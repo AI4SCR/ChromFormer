@@ -1,9 +1,25 @@
+"""This script has the necessary functions related to the normalisation techniques of the data"""
+
+__copyright__ = """
+LICENSED INTERNAL CODE. PROPERTY OF IBM.
+IBM Research Licensed Internal Code
+(C) Copyright IBM Corp. 2022
+ALL RIGHTS RESERVED
+"""
+
 import numpy as np
-from numpy import linalg as LAnumpy
+from numpy import linalg as lanumpy
 
 
-def ICE(hic_matrix: np.ndarray) -> np.ndarray:
+def ice(hic_matrix: np.ndarray) -> np.ndarray:
+    """Normalises the interaction matrix with one round of ice normalisation
 
+    Args:
+        hic_matrix: array of the interaction matrix that needs normalisation
+
+    Returns:
+        z_score: normalised array of the interaction matrix
+    """
     weighted_ice = np.sum(hic_matrix) / (
         np.sum(hic_matrix, axis=0) * np.sum(hic_matrix, axis=1)
     )
@@ -27,8 +43,16 @@ def ICE(hic_matrix: np.ndarray) -> np.ndarray:
 
 
 def normalize_numpy(z: np.ndarray) -> np.ndarray:
+    """Performs normalisation by the norm
 
-    norm = LAnumpy.norm(z, 2, axis=1)
+    Args:
+        z: array to be normalised
+
+    Returns:
+        normalised array
+    """
+
+    norm = lanumpy.norm(z, 2, axis=1)
     max_norm = np.max(norm, axis=0)
     if max_norm == 0:
         max_norm = 1
@@ -37,11 +61,26 @@ def normalize_numpy(z: np.ndarray) -> np.ndarray:
 
 
 def centralize_numpy(z: np.ndarray) -> np.ndarray:
+    """Centralises data
+
+    Args:
+        z: array to be normalised
+
+    Returns:
+        Centralised array
+    """
     return z - np.mean(z, axis=0)
 
 
 def centralize_and_normalize_numpy(z: np.ndarray) -> np.ndarray:
+    """Centralises and normalises the data
 
+    Args:
+        z: array of data to be centralised and normalised
+
+    Returns:
+        Centralised and Normalised array
+    """
     # Translate
     z = centralize_numpy(z)
 
