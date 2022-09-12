@@ -229,7 +229,7 @@ def synthetic_biological_data_generator(
 ) -> None:
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
-    Arg:
+    Args:
         rng: random state
         trussart_hic: None as not requires without optimal transport
         n_structure: integer for how many structures to creates in the dataset
@@ -348,7 +348,7 @@ def synthetic_biological_data_generator_special_values(
 ) -> None:
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
-    Arg:
+    Args:
         rng: random state
         trussart_hic: None as not requires without optimal transport
         n_structure: integer for how many structures to creates in the dataset

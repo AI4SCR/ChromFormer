@@ -257,7 +257,7 @@ def synthetic_biological_uniform_data_generator(
 ) -> None:
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
-    Arg:
+    Args:
         rng: random state to pass to the optimal transport
         trussart_hic: array of the trussart structure used as target for optimal transport
         n_structure: integer for how many structures to creates in the dataset
