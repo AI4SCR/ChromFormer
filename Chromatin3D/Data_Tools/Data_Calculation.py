@@ -12,9 +12,14 @@ import os
 from sklearn.preprocessing import MinMaxScaler
 import plotly.graph_objects as go
 from scipy.spatial import distance_matrix
-from .Normalisation import ice
+from .Normalisation import ice, centralize_and_normalize_numpy
 from .Optimal_Transport import ot_data, transport
 from typing import Tuple
+from plotly.subplots import make_subplots
+import torch
+import imageio
+from ..Model.lddt_tools import get_confidence_metrics
+from sklearn.metrics import mean_squared_error
 
 
 def import_trussart_data(path) -> Tuple[np.ndarray, np.ndarray]:
@@ -155,3 +160,135 @@ def generate_hic(
     if plot_optimal_transport:
         return hic_matrix, orig_hic, xs, xt
     return hic_matrix
+
+def kabsch_superimposition_numpy(pred_structure: np.ndarray, true_structure: np.ndarray, embedding_size: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Performs an alignment of the structure
+    
+    Args:
+        pred_structure: array of the predicted structure
+        true structure: array representing the true structure
+        embedding_size: integer representing the dimension
+    
+    Returns:
+        pred_structure_unit_ball: predicted structure once aligned with the true structure
+        true_structure_unit_ball: true structure once aligned with the pred structure
+    """
+    # Centralize and normalize to unit ball
+    pred_structure_unit_ball = centralize_and_normalize_numpy(pred_structure)
+    true_structure_unit_ball = centralize_and_normalize_numpy(true_structure)
+    
+    # Rotation (solution for the constrained orthogonal Procrustes problem, subject to det(R) = 1)
+    m = np.matmul(np.transpose(true_structure_unit_ball), pred_structure_unit_ball)
+    u, s, vh = np.linalg.svd(m)
+    
+    d = np.sign(np.linalg.det(np.matmul(u, vh)))
+    a = np.eye(embedding_size)
+    a[-1,-1] = d
+    
+    r = np.matmul(np.matmul(u, a), vh)
+    
+    pred_structure_unit_ball = np.transpose(np.matmul(r, np.transpose(pred_structure_unit_ball)))
+    
+    return pred_structure_unit_ball, true_structure_unit_ball
+
+def kabsch_distance_numpy(pred_structure: np.ndarray, true_structure: np.ndarray, embedding_size: int) -> int:
+    """Performs an alignment of the structure and a score of the mean scared error of point position
+    
+    Args:
+        pred_structure: array of the predicted structure
+        true structure: array representing the true structure
+        embedding_size: integer representing the dimension
+    
+    Returns:
+        d: integer representing the score
+    """
+    pred_structure_unit_ball, true_structure_unit_ball = \
+            kabsch_superimposition_numpy(pred_structure, true_structure, embedding_size)
+    
+    # Structure comparison
+    d = np.mean(np.sum(np.square(pred_structure_unit_ball - true_structure_unit_ball), axis=1))
+    
+    return d
+
+def save_structure(model, epoch, trussart_structures, trussart_hic, nb_bins, batch_size, embedding_size, other_params=False):
+    trussart_true_structure = np.mean(trussart_structures, axis=0)
+
+    # Trussart predicted structure
+    torch_trussart_hic = torch.FloatTensor(trussart_hic)
+    torch_trussart_hic = torch.reshape(torch_trussart_hic, (1, nb_bins, nb_bins))
+    torch_trussart_hic = torch.repeat_interleave(torch_trussart_hic, batch_size, 0)
+    if other_params:
+        trussart_pred_structure, _, _ = model(torch_trussart_hic)
+    else:
+        trussart_pred_structure, _ = model(torch_trussart_hic)
+    trussart_pred_structure = trussart_pred_structure.detach().numpy()[0]
+
+    # Superpose structure using Kabsch algorithm
+    trussart_pred_structure_superposed, trussart_true_structure_superposed = \
+            kabsch_superimposition_numpy(trussart_pred_structure, trussart_true_structure, embedding_size)
+
+    # Plot and compare the two structures
+    x_pred = trussart_pred_structure_superposed[:, 0]  
+    y_pred = trussart_pred_structure_superposed[:, 1]
+    z_pred = trussart_pred_structure_superposed[:, 2]
+
+    x_true = trussart_true_structure_superposed[:, 0]  
+    y_true = trussart_true_structure_superposed[:, 1]
+    z_true = trussart_true_structure_superposed[:, 2]
+
+    # Initialize figure with 4 3D subplots
+    fig = make_subplots(
+        rows=1, cols=1,
+        specs=[[{'type': 'scatter3d'}]])
+
+
+    fig.add_trace(
+        go.Scatter3d(
+        x=x_pred, y=y_pred, z=z_pred,
+        marker=dict(
+            size=4,
+            color=np.asarray(range(len(x_pred))),
+            colorscale='Viridis',
+        ),
+        line=dict(
+            color='darkblue',
+            width=2
+        )
+    ),row=1, col=1)
+
+    fig.update_layout(
+        height=1000,
+        width=1000
+    )
+    if not os.path.exists('images'):
+        os.makedirs('images')
+    fig.write_image(file='images/structure{:03d}.png'.format(epoch), format='png')
+    #plt.close(fig) 
+
+
+def make_gif(path_in, path_out):
+
+    png_dir = f"{path_in}images/"
+    images = []
+    for file_name in sorted(os.listdir(png_dir)):
+        if file_name.endswith('.png'):
+            file_path = os.path.join(png_dir, file_name)
+            images.append(imageio.imread(file_path))
+    imageio.mimsave(path_out, images, duration=0.2, loop=1)
+
+def scale_logits(trussart_pred_logits, scaled_model, batch_size, nb_bins):
+
+    pred_logits = trussart_pred_logits.detach()
+    pred_logits = torch.reshape(pred_logits, (batch_size*nb_bins, 100))
+    logits_trussart = scaled_model.temperature_scale(pred_logits)
+    scaled_trussart_logits = torch.reshape(logits_trussart, (batch_size,nb_bins, 100))
+    confidence_metric_scaled, plddt_scaled = get_confidence_metrics(scaled_trussart_logits.detach().numpy()[0])
+    return confidence_metric_scaled, plddt_scaled
+
+def mse_unscaled_scaled(value, plldts, plldt_scaled):
+    true = value.numpy()[0]*100
+    pred = plldts
+    pred_scaled = plldt_scaled
+    mse_unscaled = mean_squared_error(true, pred)
+    mse_scaled = mean_squared_error(true, pred_scaled)
+    return mse_unscaled, mse_scaled

@@ -20,7 +20,9 @@ pip install "git+ssh://git@github.ibm.com/AI4SCR-DEV/3D-Chromatin.git@main"
 ### Suggested setup for development
 ```sh
 pip install -r requirements.txt
-pip install torch-scatter torch-sparse torch-geometric -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
+pip install torch-scatter==2.0.7 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
+pip install torch-sparse==0.6.9 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
+pip install torch-geometric==1.7.0 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
 pre-commit install
 ```
 ## Package Documentation

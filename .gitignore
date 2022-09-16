@@ -30,6 +30,7 @@ MANIFEST
 /data/biological_trussart_special_values/**/*.*
 processed/
 raw/
+images/
 # include only .gitkeep files
 !/data/biological_trussart_uniform/**/*.gitkeep
 !/data/biological_trussart/**/*.gitkeep

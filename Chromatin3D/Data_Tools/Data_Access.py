@@ -14,6 +14,8 @@ import numpy as np
 from torch_geometric.data import Data, InMemoryDataset
 import torch
 from tqdm import tqdm
+from ..Model.lddt_tools import lddt
+import torch.nn.functional as f
 
 
 def last_4digits(x: str) -> str:
@@ -217,3 +219,42 @@ class VanillaDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
+        
+def set_logits_data(loader, device, model, batch_size, nb_bins, embedding_size, num_bins_logits):
+    logits_list = []
+    labels_list = []
+    for data in loader:
+        data = data.to(device)
+            
+        pred_structure, pred_distance, logits = model(data.hic_matrix)
+
+        pred_structure = pred_structure.detach().cpu()
+            
+        true_hic = data.hic_matrix.detach().cpu()
+        true_structure = data.structure_matrix.detach().cpu()
+        true_distance = data.distance_matrix.detach().cpu()
+            
+        true_structure = torch.reshape(true_structure, (batch_size, nb_bins, embedding_size))
+        lddt_ca = lddt(
+                        # Shape (batch_size, num_res, 3)
+            pred_structure,
+                        # Shape (batch_size, num_res, 3)
+            true_structure,
+                        # Shape (batch_size, num_res, 1)
+            cutoff=15.,
+            per_residue=True)
+
+        num_bins = num_bins_logits
+        bin_index = torch.floor(lddt_ca * num_bins).type(torch.torch.IntTensor)
+
+        # protect against out of range for lddt_ca == 1
+        bin_index = torch.minimum(bin_index, torch.tensor(num_bins, dtype=torch.int) - 1)
+        label = f.one_hot(bin_index.to(torch.int64), num_classes=num_bins)
+        label = torch.reshape(label, (batch_size*nb_bins, num_bins))
+
+        logits = torch.reshape(logits, (batch_size*nb_bins, num_bins))
+        logits_list.append(logits)
+        labels_list.append(label)
+    logits_test_temp = torch.cat(logits_list)
+    labels_test_temp = torch.cat(labels_list).type(torch.float)
+    return logits_test_temp, labels_test_temp
