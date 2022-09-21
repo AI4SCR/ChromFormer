@@ -45,7 +45,7 @@ def kabsch_loss_fct(pred_structure, true_structure, embedding_size, batch_size):
     
     m = torch.matmul(torch.transpose(true_structure, 1, 2), pred_structure)
     u, s, vh = torch.linalg.svd(m)
-    
+ 
     d = torch.sign(torch.linalg.det(torch.matmul(u, vh)))
     a = torch.eye(embedding_size).reshape((1, embedding_size, embedding_size)).repeat_interleave(batch_size, dim=0)
     a[:,-1,-1] = d

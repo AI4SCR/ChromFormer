@@ -227,8 +227,8 @@ def generate_biological_structure(
             aging -= 1
         else:
             center = stepper.pos.copy()
-            aging = 30
-            for _ in range(30):
+            aging = 5
+            for _ in range(15):
                 stepper.cluster_step(center, cluster_sigma)
 
     return centralize_and_normalize_numpy(stepper.trajectory[:nb_nodes])
