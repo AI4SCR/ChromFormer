@@ -195,6 +195,8 @@ def generate_biological_structure(
     cluster_sigma: int,
     cluster_proba: int,
     step2: bool,
+    aging_step: int,
+    nb_point_cluster: int,
 ) -> np.ndarray:
     """Calls the stepping function in order to create the structure.
 
@@ -227,8 +229,8 @@ def generate_biological_structure(
             aging -= 1
         else:
             center = stepper.pos.copy()
-            aging = 5
-            for _ in range(15):
+            aging = aging_step
+            for _ in range(nb_point_cluster):
                 stepper.cluster_step(center, cluster_sigma)
 
     return centralize_and_normalize_numpy(stepper.trajectory[:nb_nodes])
@@ -254,6 +256,8 @@ def synthetic_biological_uniform_data_generator(
     minmaxuse: bool = False,
     transportation: bool = True,
     softmaxing: bool = False,
+    aging_step: int = 30,
+    nb_per_cluster: int = 30
 ) -> None:
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
@@ -292,7 +296,7 @@ def synthetic_biological_uniform_data_generator(
     for i in tqdm(range(0, nb_structures)):
 
         path = generate_biological_structure(
-            nb_bins, delta, st_sig, end_sig, sig, clust_sig, clust_prob, secondstep
+            nb_bins, delta, st_sig, end_sig, sig, clust_sig, clust_prob, secondstep, aging_step, nb_per_cluster
         )
 
         path = centralize_and_normalize_numpy(path)

@@ -20,6 +20,8 @@ import torch
 import imageio
 from ..Model.lddt_tools import get_confidence_metrics
 from sklearn.metrics import mean_squared_error
+import pandas as pd
+from scipy.spatial import distance
 
 
 def import_trussart_data(path) -> Tuple[np.ndarray, np.ndarray]:
@@ -301,3 +303,80 @@ def import_fission_yeast(path):
     fission_yeast_hic = scaler.fit_transform(fission_yeast_hic)
     return fission_yeast_hic
 
+def FISH_values_Tanizawa(filename):
+    fish_table = pd.read_csv(filename, sep=";", header=0, names=None, dtype=float)
+    temp = fish_table[['Chr1', 'StartChr1', 'Chr2', 'EndChr2', 'FISH_dist']]
+    fish_distances = pd.DataFrame()
+    fish_distances['Chr1'] = temp['Chr1'].astype(int)
+    fish_distances['StartChr1'] = round(temp['StartChr1'] / 10000).astype(int)
+    fish_distances['Chr2'] = temp['Chr2'].astype(int)
+    fish_distances['EndChr2'] = round(temp['EndChr2'] / 10000).astype(int)
+    fish_distances['FISH_dist'] = temp['FISH_dist']
+    fish_distances.columns = ['Chr1', 'Loci1', 'Chr2', 'Loci2', 'FISH_dist']
+
+    return fish_distances
+
+def dist_Tanizawa_FISH(coordinates, fish_table):
+    startChr=[0, 558, 1012]  
+    
+    ratio = 1
+    reconstr_dist = []
+    for i in fish_table.index.values.tolist():
+        chr1 = fish_table['Chr1'][i]
+        chr2 = fish_table['Chr2'][i]
+        loci1 = fish_table['Loci1'][i]
+        loci2 = fish_table['Loci2'][i]
+        dist_fish = fish_table['FISH_dist'][i]
+        dist = distance.euclidean(coordinates[startChr[chr1-1] + loci1], coordinates[startChr[chr2-1] + loci2])
+        reconstr_dist.append(dist)
+        
+    return reconstr_dist
+
+def save_structure_fission_yeast(model, epoch, trussart_hic, nb_bins, batch_size, embedding_size, other_params=False):
+
+    # Trussart predicted structure
+    torch_trussart_hic = torch.FloatTensor(trussart_hic)
+    torch_trussart_hic = torch.reshape(torch_trussart_hic, (1, nb_bins, nb_bins))
+    torch_trussart_hic = torch.repeat_interleave(torch_trussart_hic, batch_size, 0)
+    if other_params:
+        trussart_pred_structure, _, _ = model(torch_trussart_hic)
+    else:
+        trussart_pred_structure, _ = model(torch_trussart_hic)
+    trussart_pred_structure = trussart_pred_structure.detach().numpy()[0]
+
+
+
+    # Plot and compare the two structures
+    x_pred = trussart_pred_structure[:, 0]  
+    y_pred = trussart_pred_structure[:, 1]
+    z_pred = trussart_pred_structure[:, 2]
+
+
+    # Initialize figure with 4 3D subplots
+    fig = make_subplots(
+        rows=1, cols=1,
+        specs=[[{'type': 'scatter3d'}]])
+
+
+    fig.add_trace(
+        go.Scatter3d(
+        x=x_pred, y=y_pred, z=z_pred,
+        marker=dict(
+            size=4,
+            color=np.asarray(range(len(x_pred))),
+            colorscale='Viridis',
+        ),
+        line=dict(
+            color='darkblue',
+            width=2
+        )
+    ),row=1, col=1)
+
+    fig.update_layout(
+        height=1000,
+        width=1000
+    )
+    if not os.path.exists('images'):
+        os.makedirs('images')
+    fig.write_image(file='images/structure{:03d}.png'.format(epoch), format='png')
+    #plt.close(fig) 

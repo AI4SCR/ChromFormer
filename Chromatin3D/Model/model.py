@@ -399,8 +399,8 @@ class TransConf(torch.nn.Module):
         
         self.transformer_encoder = TransformerModel(ntoken=self.embedding_size, d_model=self.nb_bins, nhead=self.nb_head, d_hid=self.nb_hidden,
                  nlayers=self.nb_layers, dropout = self.dropout, secd_hid= self.secd_hid)
-        self.linear_bin_layer = torch.nn.Linear(self.nb_hidden, self.nb_hidden)
-        self.linear_bin_layer2 = torch.nn.Linear(self.nb_hidden, self.nb_hidden)
+        self.linear_bin_layer = torch.nn.Linear(self.nb_hidden, self.num_bins_logits)
+        self.linear_bin_layer2 = torch.nn.Linear(self.num_bins_logits, self.num_bins_logits)
         if self.zero_init:
             self.zero_initializer(self.linear_bin_layer)
             self.zero_initializer(self.linear_bin_layer2)
