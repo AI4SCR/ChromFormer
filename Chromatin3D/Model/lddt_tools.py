@@ -14,7 +14,7 @@ def lddt(pred_structure, true_structure,cutoff=15.,per_residue=False):
         pred_structure[:, None, :])**2, dim=-1))
 
     dists_to_score = (
-        (dmat_true).type(torch.FloatTensor) *(1. - torch.eye(dmat_true.shape[1]).to(device))  # Exclude self-interaction.
+        (dmat_true).type(torch.FloatTensor).to(device) *(1. - torch.eye(dmat_true.shape[1]).to(device))  # Exclude self-interaction.
     )
 
   # Shift unscored distances to be far away.
