@@ -500,14 +500,14 @@ def evaluate_trans_conf(loader, model, device, batch_size, nb_bins, embedding_si
             data = data.to(device)
             
             pred_structure, pred_distance, logits = model(data.hic_matrix)
-            pred_structure = pred_structure.detach().cpu()
-            pred_distance = pred_distance.detach().cpu()
+            pred_structure = pred_structure.detach().to(device)
+            pred_distance = pred_distance.detach().to(device)
             
             pred_distance = torch.reshape(pred_distance, (batch_size*nb_bins, nb_bins))
             
-            true_hic = data.hic_matrix.detach().cpu()
-            true_structure = data.structure_matrix.detach().cpu()
-            true_distance = data.distance_matrix.detach().cpu()
+            true_hic = data.hic_matrix.detach().to(device)
+            true_structure = data.structure_matrix.detach().to(device)
+            true_distance = data.distance_matrix.detach().to(device)
             
             true_structure = torch.reshape(true_structure, (batch_size, nb_bins, embedding_size))
             
