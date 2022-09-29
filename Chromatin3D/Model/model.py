@@ -445,6 +445,8 @@ def train_trans_conf(model, train_loader, train_dataset, optimizer, device, batc
 
     loss_all = 0
     for data in train_loader:
+        import pdb
+        pdb.set_trace()
         data = data.to(device)
         optimizer.zero_grad()
         

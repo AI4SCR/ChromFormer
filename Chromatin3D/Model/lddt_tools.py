@@ -6,6 +6,7 @@ import torch.nn.functional as f
 
 def lddt(pred_structure, true_structure,cutoff=15.,per_residue=False):
   # Compute true and predicted distance matrices.
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dmat_true = torch.sqrt(1e-10 + torch.sum(
         (true_structure[:, :, None] - true_structure[:, None, :])**2, dim=-1))
     dmat_predicted = torch.sqrt(1e-10 + torch.sum(
@@ -13,7 +14,7 @@ def lddt(pred_structure, true_structure,cutoff=15.,per_residue=False):
         pred_structure[:, None, :])**2, dim=-1))
 
     dists_to_score = (
-        (dmat_true).type(torch.FloatTensor) *(1. - torch.eye(dmat_true.shape[1]))  # Exclude self-interaction.
+        (dmat_true).type(torch.FloatTensor) *(1. - torch.eye(dmat_true.shape[1]).to(device))  # Exclude self-interaction.
     )
 
   # Shift unscored distances to be far away.

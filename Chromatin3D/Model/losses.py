@@ -20,7 +20,7 @@ def compute_trussart_test_kabsch_loss(trussart_hic, trussart_structures, model, 
     return np.mean(kabsch_distances)
 
 def biological_loss_fct(pred_structure, true_structure, pred_distance, true_distance, nb_bins, batch_size):
-    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     ####### Pairwise distances loss ########
     
     between_bin_distance = \
@@ -33,21 +33,22 @@ def biological_loss_fct(pred_structure, true_structure, pred_distance, true_dist
     pred_structure_dot_products = \
         torch.matmul(pred_structure_vectors, torch.transpose(pred_structure_vectors, dim0=1, dim1=2))
     pairwise_angles_loss = \
-        torch.where(pred_structure_dot_products < 0, torch.ones((batch_size, nb_bins-1, nb_bins-1))*0.1, \
-                        torch.zeros((batch_size, nb_bins-1, nb_bins-1)))
+        torch.where(pred_structure_dot_products < 0, torch.ones((batch_size, nb_bins-1, nb_bins-1)).to(device)*0.1, \
+                        torch.zeros((batch_size, nb_bins-1, nb_bins-1)).to(device))
     pairwise_angles_loss = torch.mean(pairwise_angles_loss)
     
     return between_bin_distance_loss + pairwise_angles_loss
 
 def kabsch_loss_fct(pred_structure, true_structure, embedding_size, batch_size):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # NOTE: the two input structures should already be centralized and normalized
     
     m = torch.matmul(torch.transpose(true_structure, 1, 2), pred_structure)
     u, s, vh = torch.linalg.svd(m)
  
-    d = torch.sign(torch.linalg.det(torch.matmul(u, vh)))
-    a = torch.eye(embedding_size).reshape((1, embedding_size, embedding_size)).repeat_interleave(batch_size, dim=0)
+    d = torch.sign(torch.linalg.det(torch.matmul(u, vh))).to(device)
+    a = torch.eye(embedding_size).reshape((1, embedding_size, embedding_size)).repeat_interleave(batch_size, dim=0).to(device)
     a[:,-1,-1] = d
     
     r = torch.matmul(torch.matmul(u, a), vh)

@@ -195,8 +195,8 @@ def generate_biological_structure(
     cluster_sigma: int,
     cluster_proba: int,
     step2: bool,
-    aging_step: int,
-    nb_point_cluster: int,
+    aging_step: int = 30,
+    nb_point_cluster: int = 30,
 ) -> np.ndarray:
     """Calls the stepping function in order to create the structure.
 
