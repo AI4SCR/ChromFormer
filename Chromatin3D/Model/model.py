@@ -524,7 +524,7 @@ def evaluate_trans_conf(loader, model, device, batch_size, nb_bins, embedding_si
             distance_loss = distance_loss_fct(pred_distance, true_distance).cpu().numpy()
             distance_losses.append(distance_loss)
             
-            lddt_loss = loss_lddt(pred_structure, true_structure, logits, num_bins_logits)
+            lddt_loss = loss_lddt(pred_structure, true_structure, logits, num_bins_logits).cpu().numpy()
             lddt_losses.append(lddt_loss)
 
             

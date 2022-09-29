@@ -29,7 +29,7 @@ MANIFEST
 /data/biological_trussart/**/*.*
 /data/biological_trussart_special_values/**/*.*
 /data/biological_fission_yeast_uniform/**/*.*
-
+synthetic_random/
 processed/
 raw/
 images/
