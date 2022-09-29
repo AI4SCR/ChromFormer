@@ -529,13 +529,13 @@ def evaluate_trans_conf(loader, model, device, batch_size, nb_bins, embedding_si
 
             
             # To numpy
-            true_hic = true_hic.numpy()
+            true_hic = true_hic.cpu().numpy()
             
-            pred_structure = pred_structure.numpy()
-            true_structure = true_structure.numpy()
+            pred_structure = pred_structure.cpu().numpy()
+            true_structure = true_structure.cpu().numpy()
             
-            pred_distance = pred_distance.numpy()
-            true_distance = true_distance.numpy()
+            pred_distance = pred_distance.cpu().numpy()
+            true_distance = true_distance.cpu().numpy()
             
             # Store results
             true_hics.append(true_hic)
