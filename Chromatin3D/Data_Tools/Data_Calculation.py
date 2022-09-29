@@ -333,16 +333,16 @@ def dist_Tanizawa_FISH(coordinates, fish_table):
     return reconstr_dist
 
 def save_structure_fission_yeast(model, epoch, trussart_hic, nb_bins, batch_size, embedding_size, other_params=False):
-
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # Trussart predicted structure
     torch_trussart_hic = torch.FloatTensor(trussart_hic)
     torch_trussart_hic = torch.reshape(torch_trussart_hic, (1, nb_bins, nb_bins))
-    torch_trussart_hic = torch.repeat_interleave(torch_trussart_hic, batch_size, 0)
+    torch_trussart_hic = torch.repeat_interleave(torch_trussart_hic, batch_size, 0).to(device)
     if other_params:
         trussart_pred_structure, _, _ = model(torch_trussart_hic)
     else:
         trussart_pred_structure, _ = model(torch_trussart_hic)
-    trussart_pred_structure = trussart_pred_structure.detach().numpy()[0]
+    trussart_pred_structure = trussart_pred_structure.cpu().detach().numpy()[0]
 
 
 
