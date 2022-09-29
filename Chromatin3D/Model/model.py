@@ -513,15 +513,15 @@ def evaluate_trans_conf(loader, model, device, batch_size, nb_bins, embedding_si
             
             # Biological loss
             biological_loss = \
-                biological_loss_fct(pred_structure, true_structure, pred_distance, true_distance, nb_bins, batch_size).numpy()
+                biological_loss_fct(pred_structure, true_structure, pred_distance, true_distance, nb_bins, batch_size).cpu().numpy()
             biological_losses.append(biological_loss)
             
             # Kabsch loss
-            kabsch_loss = kabsch_loss_fct(pred_structure, true_structure, embedding_size, batch_size).numpy()
+            kabsch_loss = kabsch_loss_fct(pred_structure, true_structure, embedding_size, batch_size).cpu().numpy()
             kabsch_losses.append(kabsch_loss)
             
             # Distance loss
-            distance_loss = distance_loss_fct(pred_distance, true_distance).numpy()
+            distance_loss = distance_loss_fct(pred_distance, true_distance).cpu().numpy()
             distance_losses.append(distance_loss)
             
             lddt_loss = loss_lddt(pred_structure, true_structure, logits, num_bins_logits)
