@@ -40,7 +40,7 @@ def softmax_cross_entropy(logits, labels):
     return torch.as_tensor(loss)
 
 def loss_lddt(pred_structure, true_structure, logits, num_bins_logits):
-    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # Shape (num_res,)
     lddt_ca = lddt(
@@ -53,13 +53,13 @@ def loss_lddt(pred_structure, true_structure, logits, num_bins_logits):
         per_residue=True)
  
     num_bins = num_bins_logits
-    bin_index = torch.floor(lddt_ca * num_bins).type(torch.torch.IntTensor)
+    bin_index = torch.floor(lddt_ca * num_bins).type(torch.torch.IntTensor).to(device)
 
     # protect against out of range for lddt_ca == 1
-    bin_index = torch.minimum(bin_index, torch.tensor(num_bins, dtype=torch.int) - 1)
-    lddt_ca_one_hot = f.one_hot(bin_index.to(torch.int64), num_classes=num_bins)
+    bin_index = torch.minimum(bin_index, torch.tensor(num_bins, dtype=torch.int) - 1).to(device)
+    lddt_ca_one_hot = f.one_hot(bin_index.to(torch.int64), num_classes=num_bins).to(device)
 
-    errors = softmax_cross_entropy(logits=logits, labels=lddt_ca_one_hot.detach())
+    errors = softmax_cross_entropy(logits=logits, labels=lddt_ca_one_hot.detach()).to(device)
 
     # Shape (num_res,)
 
