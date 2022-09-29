@@ -445,16 +445,15 @@ def train_trans_conf(model, train_loader, train_dataset, optimizer, device, batc
 
     loss_all = 0
     for data in train_loader:
-        import pdb
-        pdb.set_trace()
+        
         data = data.to(device)
         optimizer.zero_grad()
         
         pred_structure, pred_distance, logits = model(data.hic_matrix)
         true_hic = data.hic_matrix.to(device)
         true_structure = data.structure_matrix.to(device)
-        true_structure = torch.reshape(true_structure, (batch_size, nb_bins, embedding_size))
-        pred_distance = torch.reshape(pred_distance, (batch_size*nb_bins, nb_bins))
+        true_structure = torch.reshape(true_structure, (batch_size, nb_bins, embedding_size)).to(device)
+        pred_distance = torch.reshape(pred_distance, (batch_size*nb_bins, nb_bins)).to(device)
         true_distance = data.distance_matrix.to(device)
         
         # Biological loss

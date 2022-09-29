@@ -43,15 +43,8 @@ def get_data_from_path(
         train_transfer_learning_distances: array of the training distance matrix
         test_transfer_learning_distances: array of the testing distance matric
     """
-    #Debug
-    array1 = np.random.random((10, 1258, 1258))
-    array2 = np.random.random((10, 1258, 1258))
-    array3 = np.random.random((10, 1258, 3))
-    array4 = np.random.random((10, 1258, 3))
-    array5 = np.random.random((10, 1258, 1258))
-    array6 = np.random.random((10, 1258, 1258))
-    return array1, array2, array3, array4, array5, array6
 
+    
     # Train HIC retrieval
     train_transfer_learning_hics = []
 
