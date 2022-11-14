@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = "Chromatin3D"
+project = "ChromFormer"
 copyright = "IBM Corp. 2022"
 author = "Henry Valeyre"
 

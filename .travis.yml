@@ -9,7 +9,7 @@ python:
 
 
 env:
-  - PACKAGE_NAME=Chromatin3D
+  - PACKAGE_NAME=ChromFormer
 
 install:
   # install the package

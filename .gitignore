@@ -38,7 +38,7 @@ images/
 !/data/biological_trussart/**/*.gitkeep
 !/data/biological_trussart_special_values/**/*.gitkeep
 !/data/biological_fission_yeast_uniform/**/*.gitkeep
-previous_work/
+bench/previous_work/
 experiment_results/
 # PyInstaller
 #  Usually these files are written by a python script from a template

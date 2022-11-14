@@ -1,9 +1,13 @@
 # The workbench close to the library
 
-This is just an example folder to tell you that not all your code needs to be part of the package.
+The work bench is structures in the following way: 
 
-For example there could be `experiments/` with training scripts or `notebooks/` with jupyter notebooks where you try stuff.
+`data_generation/` consists of the different data generation processes mostly the `trussart_generation_uniform.ipynb` and `uniform_fission_yeast.ipynb` that generate synthetic data used for the prediction of Trussart and Fission Yeast.
 
-This stuff will still be under version control and can conveniently import from the package.
+`experiments/` consists of the juptyter files used to do hyperparametrisation, and get all trussart and fission yeast results.
 
-Files here will not be installed, but could be configured to be via `package_data` in `setup.py`.
+`models/` consists of the different data models used to infer the 3D structure mostly the `biological_trans_conf_trussart_uniform` and `biological_trans_conf_fission_yeast` that use ChromFormer to predic the 3D structure and confidences of the Trussart and Fission Yeast data.
+
+`previous_work/` consists of the different works used to generate the necessary data that are used in experiments to evaluate ChromFormer
+
+`saved_models/` and `saved_results/` contain the necessary saved data to reproduce ChromFormer losses and results.

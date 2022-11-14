@@ -6,7 +6,7 @@
 ---
 maxdepth: 1
 ---
-Chromatin3D API <api/Chromatin3D>
+ChromFormer API <api/ChromFormer>
 ```
 
 

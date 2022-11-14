@@ -8,5 +8,5 @@
 from setuptools import setup
 from setuptools import find_packages
 
-#setup(packages = ['Chromatin3D', 'Chromatin3D.data_generation', 'Chromatin3D.Data_Tools'])
+#setup(packages = ['ChromFormer', 'ChromFormer.data_generation', 'ChromFormer.Data_Tools'])
 setup()
