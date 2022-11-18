@@ -10,6 +10,14 @@ pip install --upgrade pip setuptools wheel
 ```
 
 ## Installation
+brew install pyenv
+pyenv install 3.8 
+pyenv local 3.8.15
+brew install pyenv-virtualenv 
+eval "$(pyenv init -)"         
+eval "$(pyenv virtualenv-init -)"
+pyenv virtualenv 3.8.15 chromenv
+pyenv local chromenv 
 
 ## Package installation
 ```sh
@@ -29,16 +37,5 @@ pre-commit install
 ```sh
 ```
 Find Documentation for Code [here](https://pages.github.ibm.com/AI4SCR-DEV/3D-Chromatin/)
-## Usage
-...
 
-## Contributing
 
-Check [CONTRIBUTING.md](.github/CONTRIBUTING.md).
-
-## Getting support
-
-Check [SUPPORT.md](.github/SUPPORT.md).
-
-## Credits
-This project was created using https://github.ibm.com/HCLS-innersource/python-blueprint.
