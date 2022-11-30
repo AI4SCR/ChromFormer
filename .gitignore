@@ -26,6 +26,7 @@ wheels/
 MANIFEST
 # exclude everything in every folder
 /data/biological_trussart_uniform/**/*.*
+/data/demo/**/*.*
 /data/biological_trussart/**/*.*
 /data/biological_trussart_special_values/**/*.*
 /data/biological_fission_yeast_uniform/**/*.*
@@ -35,6 +36,7 @@ raw/
 images/
 # include only .gitkeep files
 !/data/biological_trussart_uniform/**/*.gitkeep
+!/data/demo/**/*.gitkeep
 !/data/biological_trussart/**/*.gitkeep
 !/data/biological_trussart_special_values/**/*.gitkeep
 !/data/biological_fission_yeast_uniform/**/*.gitkeep
@@ -101,6 +103,7 @@ celerybeat-schedule
 # Environments
 3dChromenv/
 .3dChromenv
+chromenv
 .env
 .venv
 env/
