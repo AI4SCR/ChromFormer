@@ -55,9 +55,9 @@ pip install "git+ssh://git@github.com:AI4SCR/ChromFormer.git"
 ### Suggested setup for development
 ```sh
 pip install -r requirements.txt
-pip install torch-scatter==2.0.7 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
-pip install torch-sparse==0.6.9 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
-pip install torch-geometric==1.7.0 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
+pip install torch-scatter -f https://data.pyg.org/whl/torch-1.13.0.html
+pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-1.13.0+cpu.html
+pip install torch-geometric -f https://pytorch-geometric.com/whl/torch-1.13.0+cpu.html
 pre-commit install
 ```
 ## Package Documentation
@@ -75,3 +75,12 @@ The Following is the organisation of the repository:
 ```data``` folder contains the generated synthetic and imported data 
 
 
+## Installation
+```
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+pip install torch-scatter==2.0.7 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
+pip install torch-sparse==0.6.9 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
+pip install torch-geometric==1.7.0 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
+pip install -e .
+```

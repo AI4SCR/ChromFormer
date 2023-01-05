@@ -11,9 +11,12 @@ from asyncio import constants
 import numpy as np
 from numpy import linalg as lanumpy
 from tqdm import tqdm
-from ..Data_Tools.Normalisation import centralize_and_normalize_numpy
+
+from ..utils.normalisation import centralize_and_normalize_numpy
+from .hiC import generate_hic
+
 from scipy.spatial import distance_matrix
-from ..Data_Tools.Data_Calculation import generate_hic
+
 import pandas as pd
 from typing import Tuple
 
@@ -211,7 +214,7 @@ def generate_biological_structure(
         sigma: integer representing how big the main cluster for the whole structure. Shows how condensed the structure should be
         cluster_sigma: integer representing the variance for the smaller cluster that defines how condensed the points must be
         cluster_proba: integer for the probability of obtaining a cluster
-        step2: a boolean that help to decide if their should be a change in the structure at some point
+        step2: a boolean that help to decide if there should be a change in the structure at some point
         aging_step: an integer that determins the number of steps to take before a new cluster could be considered
         nb_point_cluster: integer that determines the number of points contained in each cluster
 
@@ -236,6 +239,7 @@ def generate_biological_structure(
                 stepper.cluster_step(center, cluster_sigma)
 
     return centralize_and_normalize_numpy(stepper.trajectory[:nb_nodes])
+
 
 
 def synthetic_biological_uniform_data_generator(
