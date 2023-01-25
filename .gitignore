@@ -127,3 +127,9 @@ venv.bak/
 
 # VS Code
 .vscode/
+
+# project specific
+data-old/
+data/
+/.DS_Store
+.idea
