@@ -130,6 +130,6 @@ venv.bak/
 
 # project specific
 data-old/
-data/
+data
 /.DS_Store
 .idea
