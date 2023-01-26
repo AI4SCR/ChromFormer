@@ -7,10 +7,10 @@ IBM Research Licensed Internal Code
 ALL RIGHTS RESERVED
 """
 
-from asyncio import constants
 import numpy as np
 from numpy import linalg as lanumpy
 from tqdm import tqdm
+from pathlib import Path
 
 from ..utils.normalisation import centralize_and_normalize_numpy
 from .hiC import generate_hic
@@ -247,7 +247,7 @@ def synthetic_biological_uniform_data_generator(
     rng,
     trussart_hic: np.ndarray,
     n_structure: int,
-    data_path: constants,
+    data_path: Path,
     nb_bins: int,
     delta: float,
     st_sig: int,
@@ -321,12 +321,10 @@ def synthetic_biological_uniform_data_generator(
 
         # Structure matrix to file
         df = pd.DataFrame(data=path.astype(float))
+        fname = data_path / file_name / "structure_matrices" / f"biological_structure_{digits_format.format(i)}.txt"
+        fname.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(
-            data_path
-            + file_name
-            + "/structure_matrices/biological_structure_"
-            + digits_format.format(i)
-            + ".txt",
+            fname,
             sep=" ",
             header=False,
             index=False,
@@ -337,12 +335,9 @@ def synthetic_biological_uniform_data_generator(
 
         # Distance matrix to file
         df = pd.DataFrame(data=precomputed_distances.astype(float))
-        df.to_csv(
-            data_path
-            + file_name
-            + "/distance_matrices/biological_distance_"
-            + digits_format.format(i)
-            + ".txt",
+        fname = data_path / file_name / "distance_matrices" / f"biological_distance_{digits_format.format(i)}.txt"
+        fname.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(fname,
             sep=" ",
             header=False,
             index=False,
@@ -364,12 +359,9 @@ def synthetic_biological_uniform_data_generator(
         )
 
         df = pd.DataFrame(data=hic_matrix.astype(float))
-        df.to_csv(
-            data_path
-            + file_name
-            + "/hic_matrices/biological_hic_"
-            + digits_format.format(i)
-            + ".txt",
+        fname = data_path / file_name / "hic_matrices" / f"biological_hic_{digits_format.format(i)}.txt"
+        fname.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(fname,
             sep=" ",
             header=False,
             index=False,
