@@ -11,6 +11,7 @@ build-backend = "setuptools.build_meta"
 name = "ChromFormer"
 description = "This project aims to predict the shape of the Chromatin using Hi-C interaction matrices as input"
 authors = [
+    { name = "Adriano Martinelli", email = "art@zurich.ibm.com" },
     { name = "Henry Valeyre", email = "hva@zurich.ibm.com" },
 ]
 readme = "README.md"
