@@ -24,13 +24,14 @@ from typing import Tuple
 class Stepper(object):
     """Class that contains functions to generate the random angle or uniform vector cluster walk.
 
-    Generates the trajectory and the next step to take for the Cluster Walk. It contains the uniform walk that depends on vectors with the cube trick or angles phi and theta for 3D structures.
+    Generates the trajectory and the next step to take for the Cluster Walk. It contains the uniform walk that depends
+    on vectors with the cube trick or angles phi and theta for 3D structures.
 
     Args:
-        delta: an integer that indicates how smooth the structure should be
+        delta: indicates how smooth the structure should be
     """
 
-    def __init__(self, delta: int) -> None:
+    def __init__(self, delta: float) -> None:
         """initialises the Stepper class"""
         self.delta = delta
         self.previous_theta = np.random.uniform(0, np.pi)
@@ -52,14 +53,14 @@ class Stepper(object):
         """
         return self.trajectory[-1]
 
-    def __stepu(self, delta: int) -> Tuple[np.ndarray, np.ndarray]:
+    def __stepu(self, delta: float) -> Tuple[np.ndarray, np.ndarray]:
         """Performs the sampling of a vector and 3D point for a uniform step in the trajectory.
 
         Uniform step that uses the sphere in the cube trick, to generate a uniform vector that depends on the previous vector direction.
         It as well keeps distances of point i and i+1 similar for all i.
 
         Args:
-            delta: integer of value between 0 and 1 that represents how much the next direction depends on the previous direction
+            delta: value between 0 and 1 that represents how much the next direction depends on the previous direction
 
         Returns:
             The new position according to the selected vector
@@ -76,11 +77,11 @@ class Stepper(object):
         pos += x_vector
         return pos, x_vector
 
-    def __step(self, delta: int) -> Tuple[np.ndarray, int, int]:
+    def __step(self, delta: float) -> Tuple[np.ndarray, int, int]:
         """Step that uses the phi and delta angles to find the next 3D coordinates. Angles each depend to a certain degree of the previous angle.
 
         Args:
-            delta: integer of value between 0 and 1 that represents how much the next angle depends on the previous angle
+            delta: float of value between 0 and 1 that represents how much the next angle depends on the previous angle
 
         Returns:
             The new position according to the selected angles
@@ -152,7 +153,7 @@ class Stepper(object):
                 return self.pos
 
     def cluster_step(
-        self, cluster_center: np.ndarray, cluster_sigma: int
+        self, cluster_center: np.ndarray, cluster_sigma: float
     ) -> np.ndarray:
         """Creates a step in the trajectory, that is contained in a smaller cluster.
 
@@ -161,7 +162,7 @@ class Stepper(object):
 
         Args:
             cluster_center: Array of the coordinates of the center of the cluster to which the points must be contained in
-            cluster_sigma: integer representing the variance for the smaller cluster that define how condensed the points must be
+            cluster_sigma: variance for the smaller cluster that define how condensed the points must be
 
         Returns:
             Array representing the new position under the gaussian small cluster constraints.
@@ -191,12 +192,12 @@ class Stepper(object):
 
 def generate_biological_structure(
     nb_nodes: int,
-    delta: int,
+    delta: float,
     start_sigma: int,
     end_sigma: int,
     sigma: int,
-    cluster_sigma: int,
-    cluster_proba: int,
+    cluster_sigma: float,
+    cluster_proba: float,
     step2: bool,
     aging_step: int = 30,
     nb_point_cluster: int = 30,
@@ -208,12 +209,12 @@ def generate_biological_structure(
 
     Args:
         nb_nodes: integer for the amount of nodes the structures should have
-        delta: integer representing how smooth the structure should be.
+        delta: float representing how smooth the structure should be.
         start_sigma: integer for the step2 first sigma period
         end_sigma: integer for the step2 second sigma period
         sigma: integer representing how big the main cluster for the whole structure. Shows how condensed the structure should be
-        cluster_sigma: integer representing the variance for the smaller cluster that defines how condensed the points must be
-        cluster_proba: integer for the probability of obtaining a cluster
+        cluster_sigma: variance for the smaller cluster that defines how condensed the points must be
+        cluster_proba: probability of obtaining a cluster
         step2: a boolean that help to decide if there should be a change in the structure at some point
         aging_step: an integer that determins the number of steps to take before a new cluster could be considered
         nb_point_cluster: integer that determines the number of points contained in each cluster
@@ -248,12 +249,12 @@ def synthetic_biological_uniform_data_generator(
     n_structure: int,
     data_path: constants,
     nb_bins: int,
-    delta: int,
+    delta: float,
     st_sig: int,
     end_sig: int,
     sig: int,
-    clust_sig: int,
-    clust_prob: int,
+    clust_sig: float,
+    clust_prob: float,
     secondstep: bool,
     seed: int,
     alpha: int,
@@ -273,12 +274,12 @@ def synthetic_biological_uniform_data_generator(
         n_structure: integer for how many structures to creates in the dataset
         data_path: constant path to locate where the data should be saved outside the package
         nb_bins: integer for the number of points in the structure (HIC bins)
-        delta: integer representing how smooth the function should be
+        delta: float representing how smooth the function should be
         st_sig: integer for the step2 first sigma period
         end_sig: integer for the step2 second sigma period
         sig: integer representing how big the main cluster for the whole structure. Shows how condensed the structure should be
-        clust_sig: integer representing the variance for the smaller cluster that defines how condensed the points must be
-        clust_prob: integer for the probability of obtaining a cluster
+        clust_sig: float representing the variance for the smaller cluster that defines how condensed the points must be
+        clust_prob: float for the probability of obtaining a cluster
         secondstep: a boolean that help to decide if their should be a change in the structure at some point
         seed: integer for the seed to be set
         alpha: integer representing the exponent to be used in the distance to hic matrices transformation

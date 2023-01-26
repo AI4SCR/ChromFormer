@@ -58,8 +58,6 @@ def structure_in_sphere(synthetic_biological_structure: np.ndarray) -> go.Figure
         data=[unit_sphere_surface, synthetic_biological_structure_scatter],
         layout=layout,
     )
-
-    fig.show()
     return fig
 
 
