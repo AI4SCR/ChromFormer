@@ -9,8 +9,10 @@ from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
 import os
 import random
+from pathlib import Path
 
 load_dotenv()
+
 
 # %%
 # from ChromFormer.data_generation.Uniform_Cluster_Walk import synthetic_biological_uniform_data_generator,
@@ -67,10 +69,10 @@ from ChromFormer.models.calibration_nn import ModelWithTemperature, isotonic_cal
 # %% PARAMETERS
 
 # The following uses the package python-dotenv that can be installed by pip to load the variable that contains your path to the data folder in a .env file
-DATA_DIR = os.environ.get("DATA_DIR")
+DATA_DIR = Path(os.environ.get("DATA_DIR"))
+DATA_PATH = DATA_DIR / 'demo'  # Folder to which the training and testing data will be saved.
+DATA_PATH.mkdir(exist_ok=True, parents=True)
 
-## Folder to which the training and testing data will be saved.
-DATA_PATH = f"{DATA_DIR}/demo/"
 TRAIN_DATASET_SIZE = NB_TRAINING = 200  # training dataset size
 TEST_DATASET_SIZE = NB_testing = 100  # testing dataset size
 NB_BINS = 202  # number of points per structure
@@ -154,12 +156,15 @@ new_hic, orig_hic, Xs, Xt = generate_hic(
 )
 
 fig = pl.optimal_transport(Xs, Xt, new_hic)
+fig.show()
 
 # %%
 fig = pl.hic(new_hic)
+fig.show()
 
 # %%
 fig = pl.hic(trussart_hic)
+fig.show()
 
 # %% # Generate the data
 """

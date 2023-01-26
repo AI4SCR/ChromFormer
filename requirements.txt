@@ -16,7 +16,6 @@ bleach==6.0.0
 certifi==2022.12.7
 cffi==1.15.1
 charset-normalizer==3.0.1
--e git+ssh://git@github.com/AI4SCR/ChromFormer.git@2f898f7fa5d36271066fdde23686a2fe76f49de2#egg=ChromFormer
 click==8.1.3
 comm==0.1.2
 coverage==7.1.0
