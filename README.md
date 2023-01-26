@@ -54,10 +54,9 @@ pip install "git+ssh://git@github.com:AI4SCR/ChromFormer.git"
 
 ### Suggested setup for development
 ```sh
+# pip install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cpu.html
 pip install -r requirements.txt
-pip install torch-scatter -f https://data.pyg.org/whl/torch-1.13.0.html
-pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-1.13.0+cpu.html
-pip install torch-geometric -f https://pytorch-geometric.com/whl/torch-1.13.0+cpu.html
+# pip install -e ".[dev]"
 pre-commit install
 ```
 ## Package Documentation
@@ -73,14 +72,3 @@ The Following is the organisation of the repository:
 ```bench``` consists of all experiments attempted such as data generation, model training and comparision with previous works. To use jupyter notebooks in the bench you will need to create a .env file at the root of the repository with variable DATA_DIR="your path to the data file". Directions on further organisation of the bench and which files to run are given in the README of the bench folder. A demo of an end to end example is given in the demo folder inside the bench.  
 
 ```data``` folder contains the generated synthetic and imported data 
-
-
-## Installation
-```
-pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-pip install torch-scatter==2.0.7 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
-pip install torch-sparse==0.6.9 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
-pip install torch-geometric==1.7.0 -f https://pytorch-geometric.com/whl/torch-1.8.1+cpu.html
-pip install -e .
-```

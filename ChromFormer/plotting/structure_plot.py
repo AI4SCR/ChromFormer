@@ -3,7 +3,6 @@ import pandas
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
 def create_sphere_surface(x_0=0, y_0=0, z_0=0, radius=1):
     """Creates a sphere surface for the plotting"""
     x, y, z = create_sphere_coordinates(x_0, y_0, z_0, radius)
@@ -167,3 +166,6 @@ def structures_in_sphere(synthetic_biological_structures: list,
     fig.update_yaxes(showgrid=False)
     fig.update_layout(height=400 * nrows, width=400 * ncols)
     return fig
+
+
+

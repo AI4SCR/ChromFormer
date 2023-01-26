@@ -1,1 +1,1 @@
-from .uniform_cluster_walk import generate_biological_structure
+from .uniform_cluster_walk import generate_biological_structure, synthetic_biological_uniform_data_generator
