@@ -3,10 +3,12 @@ import os
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import torch
-import imageio
+import imageio.v2 as imageio
+from ..metrics.metrics import kabsch_superimposition_numpy
+from pathlib import Path
 
 
-def make_gif(path_in: str, path_out: str):
+def make_gif(path_in: Path, path_out: Path):
     """Creates a gif
 
     Args:
@@ -14,23 +16,24 @@ def make_gif(path_in: str, path_out: str):
         path_out: path to write the gif to
 
     """
-    png_dir = f"{path_in}images/"
     images = []
-    for file_name in sorted(os.listdir(png_dir)):
+    for file_name in sorted(os.listdir(path_in)):
         if file_name.endswith(".png"):
-            file_path = os.path.join(png_dir, file_name)
+            file_path = os.path.join(path_in, file_name)
             images.append(imageio.imread(file_path))
     imageio.mimsave(path_out, images, duration=0.2, loop=1)
 
+
 def save_structure(
-    model,
-    epoch,
-    trussart_structures,
-    trussart_hic,
-    nb_bins: int,
-    batch_size: int,
-    embedding_size: int,
-    other_params: bool = False,
+        path: Path,
+        model,
+        epoch,
+        trussart_structures,
+        trussart_hic,
+        nb_bins: int,
+        batch_size: int,
+        embedding_size: int,
+        other_params: bool = False,
 ):
     """Function that saves structures over epochs to be used later for gifs making
 
@@ -45,6 +48,7 @@ def save_structure(
         other_params: set whether alignment of structures needs to be applied
 
     """
+    path.mkdir(parents=True, exist_ok=True)
     trussart_true_structure = np.mean(trussart_structures, axis=0)
 
     # Trussart predicted structure
@@ -94,13 +98,11 @@ def save_structure(
     )
 
     fig.update_layout(height=1000, width=1000)
-    if not os.path.exists("images"):
-        os.makedirs("images")
-    fig.write_image(file="images/structure{:03d}.png".format(epoch), format="png")
-    # plt.close(fig)
+    fig.write_image(file=str(path / "structure{:03d}.png".format(epoch)), format="png")
 
-def save_structure_fission_yeast(
-    model, epoch, trussart_hic, nb_bins, batch_size, embedding_size, other_params=False
+
+def save_structure_fission_yeast(path: Path,
+        model, epoch, trussart_hic, nb_bins, batch_size, embedding_size, other_params=False
 ):
     """Function that saves structures over epochs to be used later for gifs making
 
@@ -115,6 +117,7 @@ def save_structure_fission_yeast(
         other_params: set whether alignment of structures needs to be applied
 
     """
+    path.mkdir(parents=True, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Trussart predicted structure
     torch_trussart_hic = torch.FloatTensor(trussart_hic)
@@ -155,5 +158,5 @@ def save_structure_fission_yeast(
     fig.update_layout(height=1000, width=1000)
     if not os.path.exists("images"):
         os.makedirs("images")
-    fig.write_image(file="images/structure{:03d}.png".format(epoch), format="png")
+    fig.write_image(file=str(path / "structure{:03d}.png".format(epoch)), format="png")
     # plt.close(fig)

@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from dataset import BaseDataset, DownloadMixIn
+
 
 class Trussart(BaseDataset, DownloadMixIn):
     path = Path('~/.ai4src/ChromFormer/datasets/20150115_Trussart_Dataset.zip').expanduser()  # location where the file is downloaded to
@@ -34,7 +36,6 @@ class Trussart(BaseDataset, DownloadMixIn):
         in self.data
 
         """
-        import tarfile
         from sklearn.preprocessing import MinMaxScaler
         import numpy as np
         import os

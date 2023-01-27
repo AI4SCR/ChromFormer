@@ -3,7 +3,7 @@ from torch_geometric.data import Data, InMemoryDataset
 import torch
 from tqdm import tqdm
 from typing import List
-
+from pathlib import Path
 
 class VanillaDataset(InMemoryDataset):
     """Class that contains functions to generate the Data Loader
@@ -23,7 +23,7 @@ class VanillaDataset(InMemoryDataset):
 
     def __init__(
             self,
-            root,
+            root: Path,
             transform=None,
             pre_transform=None,
             is_training: bool = True,
@@ -38,7 +38,7 @@ class VanillaDataset(InMemoryDataset):
         self.hics = hics
         self.structures = structures
         self.distances = distances
-        super(VanillaDataset, self).__init__(root, transform, pre_transform)
+        super(VanillaDataset, self).__init__(str(root), transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
