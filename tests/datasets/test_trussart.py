@@ -1,4 +1,4 @@
-from ChromFormer.datasets.trussart import Trussart
+from ChromFormer.datasets.Trussart import Trussart
 
 
 # %%
