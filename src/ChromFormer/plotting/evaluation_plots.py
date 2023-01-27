@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Figure
+
 # from .Data_Calculation import create_sphere_surface
 import plotly.graph_objects as go
 import matplotlib
@@ -84,14 +85,15 @@ def grad_flow(named_parameters) -> Figure:
 
 
 def losses(
-        losses,
-        train_biological_losses_all_epochs,
-        test_biological_losses_all_epochs,
-        train_kabsch_losses_all_epochs,
-        test_kabsch_losses_all_epochs,
-        trussart_test_kabsch_losses_all_epochs,
-        train_distance_losses_all_epochs,
-        test_distance_losses_all_epochs) -> Figure:
+    losses,
+    train_biological_losses_all_epochs,
+    test_biological_losses_all_epochs,
+    train_kabsch_losses_all_epochs,
+    test_kabsch_losses_all_epochs,
+    trussart_test_kabsch_losses_all_epochs,
+    train_distance_losses_all_epochs,
+    test_distance_losses_all_epochs,
+) -> Figure:
     fig, axs = plt.subplots(2, 2, figsize=(10, 10))
     axs[0, 0].plot(losses, label="Losses")
     axs[0, 0].legend()
@@ -124,16 +126,16 @@ def test_distance_matrix(ground_truth_matrix, reconstruction_matrix):
 
 
 def true_pred_structures(
-        x_pred,
-        y_pred,
-        z_pred,
-        x_true,
-        y_true,
-        z_true,
-        colorscale1,
-        colorscale2,
-        color1,
-        color2,
+    x_pred,
+    y_pred,
+    z_pred,
+    x_true,
+    y_true,
+    z_true,
+    colorscale1,
+    colorscale2,
+    color1,
+    color2,
 ) -> go.Figure:
     # Initialize figure with 4 3D subplots
     fig = make_subplots(
@@ -180,7 +182,7 @@ def true_pred_structures(
 
 
 def hist_kabsch_distances(
-        test_size, test_true_structures, test_pred_structures, embedding_size
+    test_size, test_true_structures, test_pred_structures, embedding_size
 ) -> Figure:
     kabsch_distances = []
 

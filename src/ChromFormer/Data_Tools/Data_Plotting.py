@@ -16,8 +16,6 @@ from plotly.subplots import make_subplots
 from .Data_Calculation import kabsch_distance_numpy
 
 
-
-
 def plot_structure_in_sphere(synthetic_biological_structure: np.ndarray) -> None:
     """Plots a structure in a spherical surface
 

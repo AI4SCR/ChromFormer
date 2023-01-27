@@ -5,6 +5,7 @@ from tqdm import tqdm
 from typing import List
 from pathlib import Path
 
+
 class VanillaDataset(InMemoryDataset):
     """Class that contains functions to generate the Data Loader
 
@@ -22,15 +23,15 @@ class VanillaDataset(InMemoryDataset):
     """
 
     def __init__(
-            self,
-            root: Path,
-            transform=None,
-            pre_transform=None,
-            is_training: bool = True,
-            dataset_size: int = 800,
-            hics: List[np.ndarray] = None,
-            structures: List[np.ndarray] = None,
-            distances: List[np.ndarray] = None,
+        self,
+        root: Path,
+        transform=None,
+        pre_transform=None,
+        is_training: bool = True,
+        dataset_size: int = 800,
+        hics: List[np.ndarray] = None,
+        structures: List[np.ndarray] = None,
+        distances: List[np.ndarray] = None,
     ):
         """Initialises the Vanilla Dataset"""
         self.is_training = is_training

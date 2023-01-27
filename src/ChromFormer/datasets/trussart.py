@@ -4,18 +4,25 @@ from dataset import BaseDataset, DownloadMixIn
 
 
 class Trussart(BaseDataset, DownloadMixIn):
-    path = Path('~/.ai4src/ChromFormer/datasets/20150115_Trussart_Dataset.zip').expanduser()  # location where the file is downloaded to
-    url = 'https://figshare.com/ndownloader/files/38945396'
+    path = Path(
+        "~/.ai4src/ChromFormer/datasets/20150115_Trussart_Dataset.zip"
+    ).expanduser()  # location where the file is downloaded to
+    url = "https://figshare.com/ndownloader/files/38945396"
     data = None
 
-    root_model = 'Toy_Models'
-    genomic_architecture = '150_TAD'
+    root_model = "Toy_Models"
+    genomic_architecture = "150_TAD"
     set_number = 0
-    path_models = Path(path.stem) / f'{root_model}/res_{genomic_architecture}/set_{set_number}/'
+    path_models = (
+        Path(path.stem) / f"{root_model}/res_{genomic_architecture}/set_{set_number}/"
+    )
 
-    root_HiC = 'Simulated_HiC'
+    root_HiC = "Simulated_HiC"
     HiC_alpha = 150
-    path_HiC = Path(path.stem) / f'{root_HiC}/res_{genomic_architecture}/{genomic_architecture}like_alpha_{HiC_alpha}_set{set_number}.mat'
+    path_HiC = (
+        Path(path.stem)
+        / f"{root_HiC}/res_{genomic_architecture}/{genomic_architecture}like_alpha_{HiC_alpha}_set{set_number}.mat"
+    )
 
     def __init__(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -41,12 +48,14 @@ class Trussart(BaseDataset, DownloadMixIn):
         import os
         from zipfile import ZipFile
 
-        with ZipFile(self.path, 'r') as zip:
+        with ZipFile(self.path, "r") as zip:
             path_HiC_extracted = self.path.parent / self.path_HiC
             path_models_extracted = self.path.parent / self.path_models
 
             files_to_extract = zip.namelist()
-            files_to_extract = list(filter(lambda x: str(self.path_models) + '/' in x, files_to_extract))
+            files_to_extract = list(
+                filter(lambda x: str(self.path_models) + "/" in x, files_to_extract)
+            )
             files_to_extract += [str(self.path_HiC)]
 
             zip.extractall(members=files_to_extract, path=self.path.parent)
@@ -67,4 +76,3 @@ class Trussart(BaseDataset, DownloadMixIn):
                 trussart_structures.append(current_trussart_structure)
 
         self.data = trussart_hic, trussart_structures
-        

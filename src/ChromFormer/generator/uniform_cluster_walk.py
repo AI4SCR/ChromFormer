@@ -242,7 +242,6 @@ def generate_biological_structure(
     return centralize_and_normalize_numpy(stepper.trajectory[:nb_nodes])
 
 
-
 def synthetic_biological_uniform_data_generator(
     rng,
     trussart_hic: np.ndarray,
@@ -321,7 +320,12 @@ def synthetic_biological_uniform_data_generator(
 
         # Structure matrix to file
         df = pd.DataFrame(data=path.astype(float))
-        fname = data_path / file_name / "structure_matrices" / f"biological_structure_{digits_format.format(i)}.txt"
+        fname = (
+            data_path
+            / file_name
+            / "structure_matrices"
+            / f"biological_structure_{digits_format.format(i)}.txt"
+        )
         fname.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(
             fname,
@@ -335,9 +339,15 @@ def synthetic_biological_uniform_data_generator(
 
         # Distance matrix to file
         df = pd.DataFrame(data=precomputed_distances.astype(float))
-        fname = data_path / file_name / "distance_matrices" / f"biological_distance_{digits_format.format(i)}.txt"
+        fname = (
+            data_path
+            / file_name
+            / "distance_matrices"
+            / f"biological_distance_{digits_format.format(i)}.txt"
+        )
         fname.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(fname,
+        df.to_csv(
+            fname,
             sep=" ",
             header=False,
             index=False,
@@ -359,9 +369,15 @@ def synthetic_biological_uniform_data_generator(
         )
 
         df = pd.DataFrame(data=hic_matrix.astype(float))
-        fname = data_path / file_name / "hic_matrices" / f"biological_hic_{digits_format.format(i)}.txt"
+        fname = (
+            data_path
+            / file_name
+            / "hic_matrices"
+            / f"biological_hic_{digits_format.format(i)}.txt"
+        )
         fname.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(fname,
+        df.to_csv(
+            fname,
             sep=" ",
             header=False,
             index=False,

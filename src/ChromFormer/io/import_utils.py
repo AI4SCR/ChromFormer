@@ -16,6 +16,7 @@ import torch
 import torch.nn.functional as f
 from ..models.lddt_tools import lddt
 
+
 def import_fission_yeast(path):
 
     FISSION_YEAST_HIC_PATH = (
@@ -25,6 +26,7 @@ def import_fission_yeast(path):
     scaler = MinMaxScaler()
     fission_yeast_hic = scaler.fit_transform(fission_yeast_hic)
     return fission_yeast_hic
+
 
 def last_4digits(x: str) -> str:
     """Function that returns the last 4 digit of our file name string
@@ -37,7 +39,14 @@ def last_4digits(x: str) -> str:
 
 def get_data_from_path(
     path: constants,
-) -> Tuple[List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray]]:
+) -> Tuple[
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+]:
     """This function retrieves the distance, hic and structure data from the provided folder
 
     Args:
@@ -144,6 +153,7 @@ def get_data_from_path(
         train_transfer_learning_distances,
         test_transfer_learning_distances,
     )
+
 
 def set_logits_data(
     loader, device, model, batch_size, nb_bins, embedding_size, num_bins_logits

@@ -25,15 +25,15 @@ def make_gif(path_in: Path, path_out: Path):
 
 
 def save_structure(
-        path: Path,
-        model,
-        epoch,
-        trussart_structures,
-        trussart_hic,
-        nb_bins: int,
-        batch_size: int,
-        embedding_size: int,
-        other_params: bool = False,
+    path: Path,
+    model,
+    epoch,
+    trussart_structures,
+    trussart_hic,
+    nb_bins: int,
+    batch_size: int,
+    embedding_size: int,
+    other_params: bool = False,
 ):
     """Function that saves structures over epochs to be used later for gifs making
 
@@ -101,8 +101,15 @@ def save_structure(
     fig.write_image(file=str(path / "structure{:03d}.png".format(epoch)), format="png")
 
 
-def save_structure_fission_yeast(path: Path,
-        model, epoch, trussart_hic, nb_bins, batch_size, embedding_size, other_params=False
+def save_structure_fission_yeast(
+    path: Path,
+    model,
+    epoch,
+    trussart_hic,
+    nb_bins,
+    batch_size,
+    embedding_size,
+    other_params=False,
 ):
     """Function that saves structures over epochs to be used later for gifs making
 

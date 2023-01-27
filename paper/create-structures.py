@@ -4,13 +4,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from ChromFormer.plotting import structure_in_sphere
-from ChromFormer.data_generation.Uniform_Cluster_Walk import generate_biological_structure
+from ChromFormer.data_generation.Uniform_Cluster_Walk import (
+    generate_biological_structure,
+)
 
 load_dotenv()
 # The following uses the package python-dotenv that can be installed by pip to load the variable that contains your path to the data folder in a .env file
-DATA_DIR = os.environ.get('DATA_DIR')
+DATA_DIR = os.environ.get("DATA_DIR")
 ## Folder to which the training and testing data will be saved.
-DATA_PATH = f'{DATA_DIR}/demo/'
+DATA_PATH = f"{DATA_DIR}/demo/"
 TRAIN_DATASET_SIZE = NB_TRAINING = 200  # training dataset size
 TEST_DATASET_SIZE = NB_testing = 100  # testing dataset size
 NB_BINS = 202  # number of points per structure
@@ -46,16 +48,18 @@ LAMBDA_KABSCH = 0.1  # Kabsch loss weight
 LAMBDA_LDDT = 0.1  # LDDT confidence loss weight
 
 # %%
-synthetic_biological_structure = generate_biological_structure(nb_nodes=NB_BINS,
-                                                               delta=DELTA,
-                                                               start_sigma=ST_SIG,
-                                                               end_sigma=END_SIG,
-                                                               sigma=SIG,
-                                                               cluster_sigma=CLUST_SIG,
-                                                               cluster_proba=CLUST_PROB,
-                                                               step2=SECONDSTEP)
+synthetic_biological_structure = generate_biological_structure(
+    nb_nodes=NB_BINS,
+    delta=DELTA,
+    start_sigma=ST_SIG,
+    end_sigma=END_SIG,
+    sigma=SIG,
+    cluster_sigma=CLUST_SIG,
+    cluster_proba=CLUST_PROB,
+    step2=SECONDSTEP,
+)
 # %%
 fig = plot_structure_in_sphere(synthetic_biological_structure)
 fig.show(renderer="browser")
-path_fig = Path("~/Downloads").expanduser() / 'structure-1.pdf'
+path_fig = Path("~/Downloads").expanduser() / "structure-1.pdf"
 fig.write_image(str(path_fig))

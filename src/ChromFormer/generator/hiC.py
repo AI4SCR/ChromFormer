@@ -27,6 +27,7 @@ def compute_hic_matrix(distance_matrix: np.ndarray, alpha: int) -> np.ndarray:
 
     return hic_matrix
 
+
 def generate_hic(
     rng,
     synthetic_biological_structure: np.ndarray,

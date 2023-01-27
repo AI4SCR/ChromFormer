@@ -22,6 +22,7 @@ from ..processing.normalisation import ice, centralize_and_normalize_numpy
 from ..processing.optimal_transport import ot_data, transport
 from ..models.lddt_tools import get_confidence_metrics
 
+
 def import_trussart_data(path) -> Tuple[np.ndarray, np.ndarray]:
     """Accesses the stored data to return the Trussart structures and hic
 
@@ -220,9 +221,6 @@ def kabsch_distance_numpy(
     )
 
     return d
-
-
-
 
 
 def scale_logits(

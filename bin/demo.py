@@ -63,13 +63,19 @@ from ChromFormer.Data_Tools.Data_Calculation import (
 from ChromFormer.models.lddt_tools import lddt, get_confidence_metrics
 
 # from ChromFormer.Model.calibration_nn import ModelWithTemperature, isotonic_calibration, beta_calibration
-from ChromFormer.models.calibration_nn import ModelWithTemperature, isotonic_calibration, beta_calibration
+from ChromFormer.models.calibration_nn import (
+    ModelWithTemperature,
+    isotonic_calibration,
+    beta_calibration,
+)
 
 # %% PARAMETERS
 
 # The following uses the package python-dotenv that can be installed by pip to load the variable that contains your path to the data folder in a .env file
 DATA_DIR = Path(os.environ.get("DATA_DIR"))
-DATA_PATH = DATA_DIR / 'demo'  # Folder to which the training and testing data will be saved.
+DATA_PATH = (
+    DATA_DIR / "demo"
+)  # Folder to which the training and testing data will be saved.
 DATA_PATH.mkdir(exist_ok=True, parents=True)
 
 TRAIN_DATASET_SIZE = NB_TRAINING = 200  # training dataset size
@@ -416,7 +422,7 @@ for epoch in range(1, NB_EPOCHS + 1):
         True,
     )
     save_structure(
-        DATA_PATH / 'images',
+        DATA_PATH / "images",
         model,
         epoch,
         trussart_structures,
@@ -466,9 +472,12 @@ GRAPH_TESTED = sorted_kabsch[2]
 test_true_structure = test_true_structures[GRAPH_TESTED]
 test_pred_structure = test_pred_structures[GRAPH_TESTED]
 
-test_pred_structure_superposed, test_true_structure_superposed = kabsch_superimposition_numpy(test_pred_structure,
-                                                                                              test_true_structure,
-                                                                                              EMBEDDING_SIZE)
+(
+    test_pred_structure_superposed,
+    test_true_structure_superposed,
+) = kabsch_superimposition_numpy(
+    test_pred_structure, test_true_structure, EMBEDDING_SIZE
+)
 
 x_pred = test_pred_structure_superposed[:, 0]
 y_pred = test_pred_structure_superposed[:, 1]
@@ -506,9 +515,9 @@ print(
 )
 
 # %% # Make a gif of the structure in time
-path_output = DATA_PATH / 'gifs'
+path_output = DATA_PATH / "gifs"
 path_output.mkdir(parents=True, exist_ok=True)
-make_gif(DATA_PATH, path_output / 'trussart_linear.gif')
+make_gif(DATA_PATH, path_output / "trussart_linear.gif")
 
 # %% # Ground truth consensus Trussart structure plotted against the predicted one
 
@@ -559,7 +568,7 @@ fig = pl.true_pred_structures(
     color1,
     color2,
 )
-fig.show(renderer='browser')
+fig.show(renderer="browser")
 
 # Shape comparison
 print(

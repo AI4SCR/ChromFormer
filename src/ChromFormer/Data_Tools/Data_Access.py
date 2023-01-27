@@ -29,7 +29,14 @@ def last_4digits(x: str) -> str:
 
 def get_data_from_path(
     path: constants,
-) -> Tuple[List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray]]:
+) -> Tuple[
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray],
+]:
     """This function retrieves the distance, hic and structure data from the provided folder
 
     Args:
