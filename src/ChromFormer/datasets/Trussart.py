@@ -1,9 +1,9 @@
 from pathlib import Path
-
+from torch.utils.data import Dataset
 from dataset import BaseDataset, DownloadMixIn
 
 
-class Trussart(BaseDataset, DownloadMixIn):
+class Trussart(Dataset, BaseDataset, DownloadMixIn):
     path = Path(
         "~/.ai4src/ChromFormer/datasets/20150115_Trussart_Dataset.zip"
     ).expanduser()  # location where the file is downloaded to
@@ -32,7 +32,7 @@ class Trussart(BaseDataset, DownloadMixIn):
         return self.data
 
     def __len__(self):
-        return None
+        return len(self.data)
 
     def setup(self):
         """Accesses the stored data to return the Trussart structures and hic

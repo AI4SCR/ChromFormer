@@ -15,10 +15,10 @@ import numpy as np
 import torch
 import torch.nn.functional as f
 from ..models.lddt_tools import lddt
+from pathlib import Path
 
 
 def import_fission_yeast(path):
-
     FISSION_YEAST_HIC_PATH = (
         f"{path}/fission_yeast/hic_matrices/GSM2446256_HiC_20min_10kb_dense.matrix"
     )
@@ -37,8 +37,59 @@ def last_4digits(x: str) -> str:
     return x[-8:-4]
 
 
+def load_from_path_save(
+        path: Path,
+) -> Tuple[
+    List[np.ndarray],
+    List[np.ndarray],
+    List[np.ndarray]
+]:
+    """This function retrieves the distance, hic and structure data from the provided folder
+
+    Args:
+        path: constant path to the desired folder
+
+    Returns:
+        transfer_learning_hics: array of the training hic
+        transfer_learning_structures: array of the training structures
+        transfer_learning_distances: array of the training distance matrix
+    """
+
+    # Train HIC retrieval
+    transfer_learning_hics = []
+
+    file_list = [str(i) for i in (path / "hic_matrices").glob('*.txt')]
+
+    for file_name in sorted(file_list, key=last_4digits):
+        current_transfer_learning_hic = np.loadtxt(path / "hic_matrices" / file_name, dtype="f", delimiter=" ")
+        transfer_learning_hics.append(current_transfer_learning_hic)
+
+    # Train structure retrieval
+    transfer_learning_structures = []
+    file_list = [str(i) for i in (path / "structure_matrices").glob('*.txt')]
+    for file_name in sorted(file_list, key=last_4digits):
+        current_transfer_learning_structure = np.loadtxt(path / "structure_matrices" / file_name, dtype="f",
+                                                         delimiter=" ")
+        transfer_learning_structures.append(current_transfer_learning_structure)
+
+    # Train distance matrix retrieval
+    transfer_learning_distances = []
+    file_list = [str(i) for i in (path / "distance_matrices").glob('*.txt')]
+
+    for file_name in sorted(file_list, key=last_4digits):
+        current_transfer_learning_distance = np.loadtxt(path / "distance_matrices" / file_name, dtype="f",
+                                                        delimiter=" ")
+        transfer_learning_distances.append(current_transfer_learning_distance)
+
+    return (
+        transfer_learning_hics,
+        transfer_learning_structures,
+        transfer_learning_distances,
+    )
+
+
 def get_data_from_path(
-    path: constants,
+        path: constants,
 ) -> Tuple[
     List[np.ndarray],
     List[np.ndarray],
@@ -67,7 +118,7 @@ def get_data_from_path(
     file_list = os.listdir(f"{path}/train/hic_matrices/")
 
     for file_name in sorted(
-        filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
+            filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
     ):
         current_train_transfer_learning_hic = np.loadtxt(
             f"{path}/train/hic_matrices/" + file_name, dtype="f", delimiter=" "
@@ -80,7 +131,7 @@ def get_data_from_path(
     file_list = os.listdir(f"{path}/test/hic_matrices/")
 
     for file_name in sorted(
-        filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
+            filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
     ):
         current_test_transfer_learning_hic = np.loadtxt(
             f"{path}/test/hic_matrices/" + file_name, dtype="f", delimiter=" "
@@ -93,7 +144,7 @@ def get_data_from_path(
     file_list = os.listdir(f"{path}/train/structure_matrices/")
 
     for file_name in sorted(
-        filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
+            filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
     ):
         current_train_transfer_learning_structure = np.loadtxt(
             f"{path}/train/structure_matrices/" + file_name, dtype="f", delimiter=" "
@@ -108,7 +159,7 @@ def get_data_from_path(
     file_list = os.listdir(f"{path}/test/structure_matrices/")
 
     for file_name in sorted(
-        filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
+            filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
     ):
         current_test_transfer_learning_structure = np.loadtxt(
             f"{path}/test/structure_matrices/" + file_name, dtype="f", delimiter=" "
@@ -123,7 +174,7 @@ def get_data_from_path(
     file_list = os.listdir(f"{path}/train/distance_matrices/")
 
     for file_name in sorted(
-        filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
+            filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
     ):
         current_train_transfer_learning_distance = np.loadtxt(
             f"{path}/train/distance_matrices/" + file_name, dtype="f", delimiter=" "
@@ -138,7 +189,7 @@ def get_data_from_path(
     file_list = os.listdir(f"{path}/test/distance_matrices/")
 
     for file_name in sorted(
-        filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
+            filter(lambda x: x.endswith(".txt"), file_list), key=last_4digits
     ):
         current_test_transfer_learning_distance = np.loadtxt(
             f"{path}/test/distance_matrices/" + file_name, dtype="f", delimiter=" "
@@ -156,7 +207,7 @@ def get_data_from_path(
 
 
 def set_logits_data(
-    loader, device, model, batch_size, nb_bins, embedding_size, num_bins_logits
+        loader, device, model, batch_size, nb_bins, embedding_size, num_bins_logits
 ):
     """Function that generates logits data for calibration
 

@@ -12,6 +12,7 @@ from numpy import linalg as lanumpy
 from tqdm import tqdm
 from pathlib import Path
 
+from ..datasets import Trussart
 from ..utils.normalisation import centralize_and_normalize_numpy
 from .hiC import generate_hic
 
@@ -133,19 +134,19 @@ class Stepper(object):
             new_pos, new_x_vector = self.__stepu(delta=self.delta)
             random_u = np.random.random()
             if (self.sphere_center == self.pos).all() or random_u <= np.exp(
-                -((np.linalg.norm(new_pos - self.sphere_center) / sigma) ** 2)
+                    -((np.linalg.norm(new_pos - self.sphere_center) / sigma) ** 2)
             ) / np.exp(
                 -(
-                    (
-                        np.linalg.norm(
-                            (self.pos - self.sphere_center)
-                            * max(
-                                0, 1 - 1 / np.linalg.norm(self.pos - self.sphere_center)
-                            )
+                        (
+                                np.linalg.norm(
+                                    (self.pos - self.sphere_center)
+                                    * max(
+                                        0, 1 - 1 / np.linalg.norm(self.pos - self.sphere_center)
+                                    )
+                                )
+                                / sigma
                         )
-                        / sigma
-                    )
-                    ** 2
+                        ** 2
                 )
             ):
                 self.trajectory.append(new_pos)
@@ -153,7 +154,7 @@ class Stepper(object):
                 return self.pos
 
     def cluster_step(
-        self, cluster_center: np.ndarray, cluster_sigma: float
+            self, cluster_center: np.ndarray, cluster_sigma: float
     ) -> np.ndarray:
         """Creates a step in the trajectory, that is contained in a smaller cluster.
 
@@ -171,17 +172,17 @@ class Stepper(object):
             new_pos, new_x_vector = self.__stepu(delta=0.5)
             random_u = np.random.random()
             if (cluster_center == self.pos).all() or random_u <= np.exp(
-                -((np.linalg.norm(new_pos - cluster_center) / cluster_sigma) ** 2)
+                    -((np.linalg.norm(new_pos - cluster_center) / cluster_sigma) ** 2)
             ) / np.exp(
                 -(
-                    (
-                        np.linalg.norm(
-                            (self.pos - cluster_center)
-                            * max(0, 1 - 1 / np.linalg.norm(self.pos - cluster_center))
+                        (
+                                np.linalg.norm(
+                                    (self.pos - cluster_center)
+                                    * max(0, 1 - 1 / np.linalg.norm(self.pos - cluster_center))
+                                )
+                                / cluster_sigma
                         )
-                        / cluster_sigma
-                    )
-                    ** 2
+                        ** 2
                 )
             ):
                 self.trajectory.append(new_pos)
@@ -191,16 +192,16 @@ class Stepper(object):
 
 
 def generate_biological_structure(
-    nb_nodes: int,
-    delta: float,
-    start_sigma: int,
-    end_sigma: int,
-    sigma: int,
-    cluster_sigma: float,
-    cluster_proba: float,
-    step2: bool,
-    aging_step: int = 30,
-    nb_point_cluster: int = 30,
+        nb_nodes: int,
+        delta: float,
+        start_sigma: int,
+        end_sigma: int,
+        sigma: int,
+        cluster_sigma: float,
+        cluster_proba: float,
+        step2: bool,
+        aging_step: int = 30,
+        nb_point_cluster: int = 30,
 ) -> np.ndarray:
     """Calls the stepping function in order to create the structure.
 
@@ -243,35 +244,31 @@ def generate_biological_structure(
 
 
 def synthetic_biological_uniform_data_generator(
-    rng,
-    trussart_hic: np.ndarray,
-    n_structure: int,
-    data_path: Path,
-    nb_bins: int,
-    delta: float,
-    st_sig: int,
-    end_sig: int,
-    sig: int,
-    clust_sig: float,
-    clust_prob: float,
-    secondstep: bool,
-    seed: int,
-    alpha: int,
-    is_training: bool = True,
-    icing: bool = True,
-    minmaxuse: bool = False,
-    transportation: bool = True,
-    softmaxing: bool = False,
-    aging_step: int = 30,
-    nb_per_cluster: int = 30,
+        n_structures: int,
+        path_save: Path,
+        nb_bins: int,
+        delta: float,
+        st_sig: int,
+        end_sig: int,
+        sig: int,
+        clust_sig: float,
+        clust_prob: float,
+        secondstep: bool,
+        seed: int,
+        alpha: int,
+        icing: bool = True,
+        minmaxuse: bool = False,
+        transportation: bool = True,
+        softmaxing: bool = False,
+        aging_step: int = 30,
+        nb_per_cluster: int = 30,
 ) -> None:
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
     Args:
-        rng: random state to pass to the optimal transport
         trussart_hic: array of the trussart structure used as target for optimal transport
-        n_structure: integer for how many structures to creates in the dataset
-        data_path: constant path to locate where the data should be saved outside the package
+        n_structures: integer for how many structures to creates in the dataset
+        path_save: constant path to locate where the data should be saved outside the package
         nb_bins: integer for the number of points in the structure (HIC bins)
         delta: float representing how smooth the function should be
         st_sig: integer for the step2 first sigma period
@@ -282,7 +279,6 @@ def synthetic_biological_uniform_data_generator(
         secondstep: a boolean that help to decide if their should be a change in the structure at some point
         seed: integer for the seed to be set
         alpha: integer representing the exponent to be used in the distance to hic matrices transformation
-        is_training: boolean that tells the function whether to save date in training or testing folder
         icing: boolean that says if we are using ICE normalisation or not
         minmaxuse: boolean that says if we are using MinMax scaling or not
         transportation: boolean that says if we are unsing optimal transport or not
@@ -292,18 +288,12 @@ def synthetic_biological_uniform_data_generator(
     """
 
     digits_format = "{0:0=4d}"
-
-    if is_training:
-        nb_structures = n_structure
-        file_name = "train"
-    else:
-        nb_structures = n_structure
-        file_name = "test"
+    trussart = Trussart()
+    trussart_hic, _ = trussart.data
 
     # Create Dataset
-    for i in tqdm(range(0, nb_structures)):
-
-        path = generate_biological_structure(
+    for i in tqdm(range(0, n_structures)):
+        synthetic_structure = generate_biological_structure(
             nb_bins,
             delta,
             st_sig,
@@ -316,15 +306,14 @@ def synthetic_biological_uniform_data_generator(
             nb_per_cluster,
         )
 
-        path = centralize_and_normalize_numpy(path)
+        synthetic_structure = centralize_and_normalize_numpy(synthetic_structure)
 
         # Structure matrix to file
-        df = pd.DataFrame(data=path.astype(float))
+        df = pd.DataFrame(data=synthetic_structure.astype(float))
         fname = (
-            data_path
-            / file_name
-            / "structure_matrices"
-            / f"biological_structure_{digits_format.format(i)}.txt"
+                path_save
+                / "structure_matrices"
+                / f"biological_structure_{digits_format.format(i)}.txt"
         )
         fname.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(
@@ -335,15 +324,14 @@ def synthetic_biological_uniform_data_generator(
         )
 
         # Compute distance matrix
-        precomputed_distances = distance_matrix(path, path)
+        precomputed_distances = distance_matrix(synthetic_structure, synthetic_structure)
 
         # Distance matrix to file
         df = pd.DataFrame(data=precomputed_distances.astype(float))
         fname = (
-            data_path
-            / file_name
-            / "distance_matrices"
-            / f"biological_distance_{digits_format.format(i)}.txt"
+                path_save
+                / "distance_matrices"
+                / f"biological_distance_{digits_format.format(i)}.txt"
         )
         fname.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(
@@ -354,11 +342,9 @@ def synthetic_biological_uniform_data_generator(
         )
 
         # Compute HiC matrix
-
         hic_matrix = generate_hic(
-            rng,
-            path,
-            trussart_hic,
+            synthetic_biological_structure=synthetic_structure,
+            trussart_hic=trussart_hic,
             use_ice=icing,
             use_minmax=minmaxuse,
             use_ot=transportation,
@@ -370,10 +356,9 @@ def synthetic_biological_uniform_data_generator(
 
         df = pd.DataFrame(data=hic_matrix.astype(float))
         fname = (
-            data_path
-            / file_name
-            / "hic_matrices"
-            / f"biological_hic_{digits_format.format(i)}.txt"
+                path_save
+                / "hic_matrices"
+                / f"biological_hic_{digits_format.format(i)}.txt"
         )
         fname.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(

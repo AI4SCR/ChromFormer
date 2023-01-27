@@ -29,7 +29,6 @@ def compute_hic_matrix(distance_matrix: np.ndarray, alpha: int) -> np.ndarray:
 
 
 def generate_hic(
-    rng,
     synthetic_biological_structure: np.ndarray,
     trussart_hic: np.ndarray,
     use_ice: bool = True,
@@ -43,7 +42,6 @@ def generate_hic(
     """This function is used to generate hic from a given structure matrix that depends on parameters
 
     Args:
-        rng: seed random state to use and that is passed accross functions
         synthetic_biological_structure: array of the structure to use to generate an interaction matrix
         trussart_hic: array of the trussart hic to use for optimal transport
         use_ice: boolean that declares if ice normalisation should be used
@@ -72,7 +70,7 @@ def generate_hic(
 
     if use_ot:
         orig_hic = hic_matrix
-        # rng = np.random.RandomState(seed)
+        rng = np.random.RandomState(seed)
         xs, xt, x1, x2 = ot_data(hic_matrix, trussart_hic, rng)
         hic_matrix, i2te = transport(
             xs, xt, x1, x2, hic_matrix.shape, trussart_hic.shape

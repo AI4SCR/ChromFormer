@@ -1,2 +1,3 @@
-from .trussart import Trussart
-from .vanilla import VanillaDataset
+from .Trussart import Trussart
+from .Vanilla import VanillaDataset
+from .Synthetic import SyntheticDataset
