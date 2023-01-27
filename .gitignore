@@ -129,6 +129,7 @@ venv.bak/
 .vscode/
 
 # project specific
+gifs/
 data-old/
 data
 /.DS_Store

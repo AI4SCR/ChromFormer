@@ -4,7 +4,7 @@
 # %%
 import numpy as np
 import torch
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
 import os
@@ -12,7 +12,6 @@ import random
 from pathlib import Path
 
 load_dotenv()
-
 
 # %%
 # from ChromFormer.data_generation.Uniform_Cluster_Walk import synthetic_biological_uniform_data_generator,
@@ -245,7 +244,7 @@ The synthetic train and test distance structure and HiC matrices are first retri
 # %% # Data is then loaded
 
 train_dataset = VanillaDataset(
-    root="",
+    root=DATA_PATH,
     is_training=True,
     dataset_size=TRAIN_DATASET_SIZE,
     hics=train_transfer_learning_hics,
@@ -259,7 +258,7 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
 
 # %%
 test_dataset = VanillaDataset(
-    root="",
+    root=DATA_PATH,
     is_training=False,
     dataset_size=TEST_DATASET_SIZE,
     hics=test_transfer_learning_hics,
@@ -300,7 +299,6 @@ The device on which to run the model is first selected, then the model is declar
 
 distance_loss_fct = torch.nn.MSELoss()
 
-device = torch.device("cpu")
 model = TransConf(
     NB_BINS,
     ANGLE_PRED,
@@ -314,7 +312,6 @@ model = TransConf(
     SECD_HID,
 ).to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=1e-5)
-# optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
 
 # %%
@@ -339,7 +336,7 @@ test_lddt_losses_all_epochs = []
 losses = []
 
 trussart_test_kabsch_losses_all_epochs = []
-
+NB_EPOCHS = 2
 for epoch in range(1, NB_EPOCHS + 1):
     loss = train_trans_conf(
         model,
@@ -419,6 +416,7 @@ for epoch in range(1, NB_EPOCHS + 1):
         True,
     )
     save_structure(
+        DATA_PATH / 'images',
         model,
         epoch,
         trussart_structures,
@@ -468,7 +466,9 @@ GRAPH_TESTED = sorted_kabsch[2]
 test_true_structure = test_true_structures[GRAPH_TESTED]
 test_pred_structure = test_pred_structures[GRAPH_TESTED]
 
-test_pred_structure_superposed,test_true_structure_superposed = kabsch_superimposition_numpy(test_pred_structure, test_true_structure, EMBEDDING_SIZE)
+test_pred_structure_superposed, test_true_structure_superposed = kabsch_superimposition_numpy(test_pred_structure,
+                                                                                              test_true_structure,
+                                                                                              EMBEDDING_SIZE)
 
 x_pred = test_pred_structure_superposed[:, 0]
 y_pred = test_pred_structure_superposed[:, 1]
@@ -506,7 +506,9 @@ print(
 )
 
 # %% # Make a gif of the structure in time
-make_gif("", "gifs/trussart_linear.gif")
+path_output = DATA_PATH / 'gifs'
+path_output.mkdir(parents=True, exist_ok=True)
+make_gif(DATA_PATH, path_output / 'trussart_linear.gif')
 
 # %% # Ground truth consensus Trussart structure plotted against the predicted one
 
@@ -557,6 +559,7 @@ fig = pl.true_pred_structures(
     color1,
     color2,
 )
+fig.show(renderer='browser')
 
 # Shape comparison
 print(
@@ -583,8 +586,10 @@ value = lddt(
 )
 print(torch.mean(value))
 
-# %% # Temperature Scaling with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
-
+# %% # Temperature Scaling
+"""
+Temperature Scaling with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
+"""
 
 orig_model = model
 valid_loader = test_train_calib_loader
@@ -612,8 +617,10 @@ mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, plddt_scaled)
 print(mse_unscalled)
 print(mse_scalled)
 
-# %% # Isotonic Regression Calibration with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
-
+# %% # Isotonic Regression Calibration
+"""
+Isotonic Regression Calibration with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
+"""
 
 valid_loader = test_train_calib_loader
 logits_test_temp, labels_test_temp = set_logits_data(
@@ -633,7 +640,10 @@ mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, pLDDT_iso)
 print(mse_unscalled)
 print(mse_scalled)
 
-# %% # Beta Calibration with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
+# %% # Beta Calibration
+"""
+Beta Calibration with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
+"""
 
 
 valid_loader = test_train_calib_loader
