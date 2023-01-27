@@ -183,7 +183,7 @@ synthetic_biological_uniform_data_generator(
     rng,
     trussart_hic,
     n_structure=NB_TRAINING,
-    data_path=DATA_PATH,
+    path_save=DATA_PATH,
     nb_bins=NB_BINS,
     delta=DELTA,
     st_sig=ST_SIG,
@@ -209,7 +209,7 @@ synthetic_biological_uniform_data_generator(
     rng,
     trussart_hic,
     n_structure=NB_testing,
-    data_path=DATA_PATH,
+    path_save=DATA_PATH,
     nb_bins=NB_BINS,
     delta=DELTA,
     st_sig=ST_SIG,
@@ -342,7 +342,7 @@ test_lddt_losses_all_epochs = []
 losses = []
 
 trussart_test_kabsch_losses_all_epochs = []
-NB_EPOCHS = 2
+
 for epoch in range(1, NB_EPOCHS + 1):
     loss = train_trans_conf(
         model,
@@ -517,7 +517,7 @@ print(
 # %% # Make a gif of the structure in time
 path_output = DATA_PATH / "gifs"
 path_output.mkdir(parents=True, exist_ok=True)
-make_gif(DATA_PATH, path_output / "trussart_linear.gif")
+make_gif(DATA_PATH / 'images', path_output / "trussart_linear.gif")
 
 # %% # Ground truth consensus Trussart structure plotted against the predicted one
 
