@@ -7,6 +7,11 @@ def test_load_trussart():
     assert True
 
 
+def test_download_trussart():
+    ds = Trussart(force_download=True)
+    assert True
+
+
 def test_trussart_data_equivalence():
     from ChromFormer.Data_Tools.Data_Calculation import import_trussart_data
 

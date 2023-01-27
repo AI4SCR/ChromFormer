@@ -24,9 +24,9 @@ class Trussart(BaseDataset, DownloadMixIn):
         / f"{root_HiC}/res_{genomic_architecture}/{genomic_architecture}like_alpha_{HiC_alpha}_set{set_number}.mat"
     )
 
-    def __init__(self):
+    def __init__(self, force_download=False):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        super().__init__()
+        super().__init__(force_download=force_download)
 
     def __getitem__(self, index):
         return self.data
