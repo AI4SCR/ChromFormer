@@ -1,11 +1,10 @@
 # %%
-from ChromFormer.data_generation.Uniform_Cluster_Walk import generate_biological_structure
-from ChromFormer.Data_Tools.Data_Plotting import plot_structure_in_sphere
-from dotenv import load_dotenv
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
-from sklearn.model_selection import ParameterGrid
+from ChromFormer.plotting import structure_in_sphere
+from ChromFormer.data_generation.Uniform_Cluster_Walk import generate_biological_structure
 
 load_dotenv()
 # The following uses the package python-dotenv that can be installed by pip to load the variable that contains your path to the data folder in a .env file
