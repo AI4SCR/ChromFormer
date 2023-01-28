@@ -102,7 +102,7 @@ pure-eval==0.2.2
 pycodestyle==2.10.0
 pycparser==2.21
 pyflakes==3.0.1
-pyg-lib==0.1.0+pt113
+pyg-lib -f https://data.pyg.org/whl/torch-1.13.0+cpu.html
 Pygments==2.14.0
 pyparsing==3.0.9
 pyrsistent==0.19.3

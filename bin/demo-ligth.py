@@ -55,7 +55,7 @@ DATA_PATH = (
 DATA_PATH.mkdir(exist_ok=True, parents=True)
 
 TRAIN_DATASET_SIZE = NB_TRAINING = 4  # training dataset size
-TEST_DATASET_SIZE = NB_testing = 4  # testing dataset size
+TEST_DATASET_SIZE = NB_testing = 2  # testing dataset size
 NB_BINS = 202  # number of points per structure
 
 # Data Generation relevant parameters
@@ -120,7 +120,7 @@ synthetic_biological_structure = generate_biological_structure(
 )
 
 fig = pl.structure_in_sphere(synthetic_biological_structure)
-fig.show(renderer="browser")
+# fig.show(renderer="browser")
 
 # %% # Imports the trussart ground truth HiC used as a target distribution to match our generated HiCs.
 trussart = Trussart()
@@ -239,8 +239,6 @@ model_light = LitChromFormer(model=model,
                              num_bins_logits=NUM_BINS_LOGITS)
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 CKPT_PATH = DATA_PATH / 'checkpoints'
 trainer = pylight.Trainer(limit_train_batches=100, min_epochs=NB_EPOCHS, max_epochs=NB_EPOCHS,
                           default_root_dir=str(CKPT_PATH))
@@ -248,8 +246,9 @@ trainer = pylight.Trainer(limit_train_batches=100, min_epochs=NB_EPOCHS, max_epo
 trainer.fit(model=model_light, train_dataloaders=train_loader)
 
 test_dataloaders = {'train': train_loader, 'test': test_loader, 'trussart': trussart_loader}
-test_results = trainer.test(model=model_light, dataloaders=list(test_dataloaders.values()))
-test_results = dict(zip(test_dataloaders.keys(), test_results))
+test_results = trainer.test(model=model_light, dataloaders=[train_loader, test_loader])
+# TODO: trussart_loader
+# test_results = dict(zip(test_dataloaders.keys(), test_results))
 
 # %%
 """
