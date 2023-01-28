@@ -2,17 +2,17 @@
 
 import torch
 import numpy as np
-from ..Data_Tools.Data_Calculation import kabsch_distance_numpy
+from ..metrics.metrics import kabsch_distance_numpy
 
 
 def compute_trussart_test_kabsch_loss(
-    trussart_hic,
-    trussart_structures,
-    model,
-    nb_bins,
-    batch_size,
-    embedding_size,
-    other_params=False,
+        trussart_hic,
+        trussart_structures,
+        model,
+        nb_bins,
+        batch_size,
+        embedding_size,
+        other_params=False,
 ):
     """Computes the kabsch distance between the trussart data and the synthetic data
 
@@ -49,7 +49,7 @@ def compute_trussart_test_kabsch_loss(
 
 
 def biological_loss_fct(
-    pred_structure, true_structure, pred_distance, true_distance, nb_bins, batch_size
+        pred_structure, true_structure, pred_distance, true_distance, nb_bins, batch_size
 ):
     """Computes the biofeasibility loss. This is done by penalising non smooth angles between consecutive trajectories and the variance of distances between consecutive loci
 
@@ -64,31 +64,25 @@ def biological_loss_fct(
     Returns:
         A biological score
     """
-    device = "cuda" if torch.cuda.is_available() else "cpu"
     ####### Pairwise distances loss ########
 
-    between_bin_distance = torch.diagonal(
-        pred_distance.reshape((batch_size, nb_bins, nb_bins)), offset=1, dim1=1, dim2=2
-    )
+    # NOTE: removed pred_distance.reshape((batch_size, nb_bins, nb_bins))
+    between_bin_distance = torch.diagonal(pred_distance, offset=1, dim1=1, dim2=2)
     between_bin_distance_loss = torch.var(between_bin_distance)
 
     ######### Consecutive angles loss ##########
 
-    pred_structure_vectors = (pred_structure - torch.roll(pred_structure, 1, dims=1))[
-        :, 1:, :
-    ]
+    pred_structure_vectors = (pred_structure - torch.roll(pred_structure, 1, dims=1))[:, 1:, :]
     pred_structure_dot_products = torch.diagonal(
-        torch.matmul(
-            pred_structure_vectors,
-            torch.transpose(pred_structure_vectors, dim0=1, dim1=2),
-        ),
-        offset=-1,
-        dim1=2,
-    )
+        torch.matmul(pred_structure_vectors,
+                     torch.transpose(pred_structure_vectors, dim0=1, dim1=2)), offset=-1, dim1=2)
+
+    # NOTE: changed
+    #   torch.ones((10,... -> torch.ones((batch_size,...
     pairwise_angles_loss = torch.where(
         pred_structure_dot_products < 0,
-        torch.ones((10, nb_bins - 2)).to(device) * 0.1,
-        torch.zeros((10, nb_bins - 2)).to(device),
+        torch.ones((batch_size, nb_bins - 2)) * 0.1,
+        torch.zeros((batch_size, nb_bins - 2)),
     )
 
     pairwise_angles_loss = torch.mean(pairwise_angles_loss)
@@ -109,18 +103,14 @@ def kabsch_loss_fct(pred_structure, true_structure, embedding_size, batch_size):
         trussart_hic: numpy array of the trussart interaction matrices
         trussart_structures: numpy array of the the trussart structures
     """
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
     m = torch.matmul(torch.transpose(true_structure, 1, 2), pred_structure)
     u, s, vh = torch.linalg.svd(m)
 
-    d = torch.sign(torch.linalg.det(torch.matmul(u, vh))).to(device)
+    d = torch.sign(torch.linalg.det(torch.matmul(u, vh)))
     a = (
         torch.eye(embedding_size)
         .reshape((1, embedding_size, embedding_size))
         .repeat_interleave(batch_size, dim=0)
-        .to(device)
     )
     a[:, -1, -1] = d
 

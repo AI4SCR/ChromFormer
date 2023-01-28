@@ -106,16 +106,16 @@ def create_sphere_surface(x_0=0, y_0=0, z_0=0, radius=1):
 
 
 def generate_hic(
-    rng,
-    synthetic_biological_structure: np.ndarray,
-    trussart_hic: np.ndarray,
-    use_ice: bool = True,
-    use_minmax: bool = False,
-    use_ot: bool = True,
-    use_softmax: bool = False,
-    seed: int = 42,
-    plot_optimal_transport: bool = False,
-    exponent: int = 1,
+        rng,
+        synthetic_biological_structure: np.ndarray,
+        trussart_hic: np.ndarray,
+        use_ice: bool = True,
+        use_minmax: bool = False,
+        use_ot: bool = True,
+        use_softmax: bool = False,
+        seed: int = 42,
+        plot_optimal_transport: bool = False,
+        exponent: int = 1,
 ):
     """This function is used to generate hic from a given structure matrix that depends on parameters
 
@@ -163,9 +163,9 @@ def generate_hic(
     return hic_matrix
 
 
-def kabsch_superimposition_numpy(
-    pred_structure: np.ndarray, true_structure: np.ndarray, embedding_size: int
-) -> Tuple[np.ndarray, np.ndarray]:
+def kabsch_superimposition_numpy(pred_structure: np.ndarray,
+                                 true_structure: np.ndarray,
+                                 embedding_size: int) -> Tuple[np.ndarray, np.ndarray]:
     """Performs an alignment of the structure
 
     Args:
@@ -199,7 +199,7 @@ def kabsch_superimposition_numpy(
 
 
 def kabsch_distance_numpy(
-    pred_structure: np.ndarray, true_structure: np.ndarray, embedding_size: int
+        pred_structure: np.ndarray, true_structure: np.ndarray, embedding_size: int
 ) -> int:
     """Performs an alignment of the structure and a score of the mean scared error of point position
 
@@ -211,6 +211,7 @@ def kabsch_distance_numpy(
     Returns:
         d: integer representing the score
     """
+    pred_structure, true_structure = pred_structure.numpy(), true_structure.numpy()
     pred_structure_unit_ball, true_structure_unit_ball = kabsch_superimposition_numpy(
         pred_structure, true_structure, embedding_size
     )
@@ -224,9 +225,8 @@ def kabsch_distance_numpy(
 
 
 def scale_logits(
-    trussart_pred_logits, scaled_model, batch_size: int, nb_bins: int
+        trussart_pred_logits, scaled_model, batch_size: int, nb_bins: int
 ) -> Tuple[int, np.ndarray]:
-
     pred_logits = trussart_pred_logits.detach()
     pred_logits = torch.reshape(pred_logits, (batch_size * nb_bins, 100))
     logits_trussart = scaled_model.temperature_scale(pred_logits)
@@ -261,7 +261,6 @@ def FISH_values_Tanizawa(filename):
 
 
 def dist_Tanizawa_FISH(coordinates, fish_table):
-
     startChr = [0, 558, 1012]
 
     ratio = 1

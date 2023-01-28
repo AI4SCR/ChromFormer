@@ -80,19 +80,7 @@ class LitChromFormer(pylight.LightningModule):
         )
 
         # Kabsch loss
-        kabsch_loss = kabsch_loss_fct(
-            pred_structure, true_structure, self.embedding_size, batch_size
-        )
-
-        # TODO: fix input
-        kabsch_distances = []
-        for true_structure in true_structure:
-            kabsch_distances.append(
-                kabsch_distance_numpy(
-                    pred_structure, true_structure, self.embedding_size
-                )
-            )
-        kabsch_distance = np.mean(kabsch_distances)
+        kabsch_loss = kabsch_loss_fct(pred_structure, true_structure, self.embedding_size, batch_size)
 
         # Distance loss
         distance_loss = self.distance_loss_fct(pred_distance, true_distance)
@@ -106,62 +94,57 @@ class LitChromFormer(pylight.LightningModule):
                 + distance_loss
                 + self.lambda_lddt * lddt_loss
         )
-        # TODO: Do I need to call this here?
-        loss.backward()
-        loss = batch.num_graphs * loss.item()
 
         return loss
 
-    def test_step(self, batch, batch_idx):
+    # https: // pytorch - lightning.readthedocs.io / en / latest / guides / data.html  # multiple-validation-test-predict-dataloaders
+    def test_step(self, batch, batch_idx, dataloader_idx):
+        #
         # this is the test loop
-        batch_size = len(batch)
+        batch_size = len(batch[0])
 
-        pred_structure, pred_distance, logits = self.model(batch.hic_matrix)
-        pred_structure = pred_structure.detach().cpu()
-        pred_distance = pred_distance.detach().cpu()
+        # batch[0] := hic matrix
+        # batch[1] := structure
+        # batch[2] := distance
+        true_hics, true_structures, true_distances = batch
 
-        pred_distance = torch.reshape(
-            pred_distance, (batch_size * self.nb_bins, self.nb_bins)
-        )
+        pred_structures, pred_distances, logits = self.model(true_hics)
 
-        true_hic = batch.hic_matrix.detach().cpu()
-        true_structure = batch.structure_matrix.detach().cpu()
-        true_distance = batch.distance_matrix.detach().cpu()
-
-        true_structure = torch.reshape(
-            true_structure, (batch_size, self.nb_bins, self.embedding_size)
-        )
+        assert pred_structures.shape == true_structures.shape
+        assert pred_distances.shape == true_distances.shape
 
         # Biological loss
         biological_loss = biological_loss_fct(
-            pred_structure,
-            true_structure,
-            pred_distance,
-            true_distance,
+            pred_structures,
+            true_structures,
+            pred_distances,
+            true_distances,
             self.nb_bins,
             batch_size,
         ).numpy()
 
-        # Kabsch loss
-        kabsch_loss = kabsch_loss_fct(
-            pred_structure, true_structure, self.embedding_size, batch_size
-        ).numpy()
+        # Kabsch
+        kabsch_loss = kabsch_loss_fct(pred_structures, true_structures, self.embedding_size, batch_size).numpy()
+        kabsch_distance = []
+        for pred_structure, true_structure in zip(pred_structures, true_structures):
+            kabsch_distance.append(kabsch_distance_numpy(pred_structure, true_structure, self.embedding_size))
+        kabsch_distance = np.mean(kabsch_distance)
 
         # Distance loss
-        distance_loss = self.distance_loss_fct(pred_distance, true_distance).numpy()
+        distance_loss = self.distance_loss_fct(pred_distances, true_distances).numpy()
 
         lddt_loss = loss_lddt(
-            pred_structure, true_structure, logits, self.num_bins_logits
+            pred_structures, true_structures, logits, self.num_bins_logits
         )
 
         # To numpy
-        true_hic = true_hic.numpy()
+        true_hics = true_hics.numpy()
 
-        pred_structure = pred_structure.numpy()
-        true_structure = true_structure.numpy()
+        pred_structures = pred_structures.numpy()
+        true_structures = true_structures.numpy()
 
-        pred_distance = pred_distance.numpy()
-        true_distance = true_distance.numpy()
+        pred_distances = pred_distances.numpy()
+        true_distances = true_distances.numpy()
 
         # # Format results
         # true_hics = np.vstack(true_hics)
@@ -178,10 +161,11 @@ class LitChromFormer(pylight.LightningModule):
         # mean_distance_loss = np.mean(np.asarray(distance_losses).flatten())
         # mean_lddt_loss = np.mean(np.asarray(lddt_losses).flatten())
 
-        self.log("biological_loss", biological_loss)
-        self.log("kabsch_loss", kabsch_loss)
-        self.log("distance_loss", distance_loss)
-        self.log("lddt_losses", lddt_loss)
+        self.log("biological_loss", float(biological_loss))
+        self.log("kabsch_loss", float(kabsch_loss))
+        self.log("kabsch_loss", float(kabsch_distance))
+        self.log("distance_loss", float(distance_loss))
+        self.log("lddt_losses", float(lddt_loss))
 
 
     def configure_optimizers(self):

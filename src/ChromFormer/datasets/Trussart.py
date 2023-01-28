@@ -8,7 +8,6 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
         "~/.ai4src/ChromFormer/datasets/20150115_Trussart_Dataset.zip"
     ).expanduser()  # location where the file is downloaded to
     url = "https://figshare.com/ndownloader/files/38945396"
-    data = None
 
     root_model = "Toy_Models"
     genomic_architecture = "150_TAD"
@@ -29,18 +28,17 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
         super().__init__(force_download=force_download)
 
     def __getitem__(self, index):
-        return self.data
+        return self.hic, self.structures[index], None
 
     def __len__(self):
-        return len(self.data)
+        return len(self.structures)
 
     def setup(self):
         """Accesses the stored data to return the Trussart structures and hic
 
         Saves
-            trussart_hic: numpy array of the trussart interaction matrices
-            trussart_structures: numpy array of the the trussart structures
-        in self.data
+            hic: numpy array of the trussart interaction matrix
+            structures: numpy array of the trussart structures for the HiC
 
         """
         from sklearn.preprocessing import MinMaxScaler
@@ -75,4 +73,6 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
                 current_trussart_structure = current_trussart_structure[:, 1:]
                 trussart_structures.append(current_trussart_structure)
 
-        self.data = trussart_hic, trussart_structures
+        # TODO: What is the right way to handle the dataset?
+        self.hic = trussart_hic
+        self.structures = trussart_structures
