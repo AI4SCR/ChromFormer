@@ -222,20 +222,14 @@ def set_logits_data(
     """
     logits_list = []
     labels_list = []
-    for data in loader:
-        data = data.to(device)
+    for batch in loader:
+        # batch[0] := hic matrix
+        # batch[1] := structure
+        # batch[2] := distance
+        true_hic, true_structure, true_distance = batch
 
-        pred_structure, pred_distance, logits = model(data.hic_matrix)
+        pred_structure, pred_distance, logits = model(true_hic)
 
-        pred_structure = pred_structure.detach().cpu()
-
-        true_hic = data.hic_matrix.detach().cpu()
-        true_structure = data.structure_matrix.detach().cpu()
-        true_distance = data.distance_matrix.detach().cpu()
-
-        true_structure = torch.reshape(
-            true_structure, (batch_size, nb_bins, embedding_size)
-        )
         lddt_ca = lddt(
             # Shape (batch_size, num_res, 3)
             pred_structure,

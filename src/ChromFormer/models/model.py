@@ -1,5 +1,5 @@
 import torch
-from ..Data_Tools.Normalisation import centralize_and_normalize_torch
+from ..processing.normalisation import centralize_and_normalize_torch
 import torch.nn.functional as f
 from .losses import biological_loss_fct, kabsch_loss_fct
 import numpy as np
@@ -18,10 +18,9 @@ class UniformLinear(torch.nn.Module):
         batch_size: size of the batch
     """
 
-    def __init__(self, nb_bins: int, embedding_size: int, batch_size: int):
+    def __init__(self, nb_bins: int, embedding_size: int):
         self.nb_bins = nb_bins
         self.embedding_size = embedding_size
-        self.batch_size = batch_size
         super(UniformLinear, self).__init__()
 
         self.linear_encoder_layer_1 = torch.nn.Linear(self.nb_bins, 100)
@@ -41,7 +40,7 @@ class UniformLinear(torch.nn.Module):
             z: 3D structures
             w: distance matrices
         """
-        x = torch.reshape(x, (self.batch_size, self.nb_bins, self.nb_bins))
+        # x = torch.reshape(x, (self.batch_size, self.nb_bins, self.nb_bins))
 
         z = self.linear_encoder_layer_1(x)
         z = f.relu(z)
@@ -49,9 +48,7 @@ class UniformLinear(torch.nn.Module):
         z = f.relu(z)
         z = self.linear_encoder_layer_3(z)
         z = f.relu(z)
-        z = centralize_and_normalize_torch(
-            z, self.embedding_size, self.nb_bins, self.batch_size
-        )
+        z = centralize_and_normalize_torch(z)
 
         w = torch.cdist(z, z, p=2)
 
@@ -279,13 +276,11 @@ class ConfLinear(torch.nn.Module):
         self,
         nb_bins: int,
         embedding_size: int,
-        batch_size: int,
         num_bins_logits: int,
         zero_init: bool = True,
     ):
         self.nb_bins = nb_bins
         self.embedding_size = embedding_size
-        self.batch_size = batch_size
         self.zero_init = zero_init
         self.num_bins_logits = num_bins_logits
         super(ConfLinear, self).__init__()
@@ -313,7 +308,7 @@ class ConfLinear(torch.nn.Module):
             logits: predicted logits for belonging in each confidence bin
         """
 
-        x = torch.reshape(x, (self.batch_size, self.nb_bins, self.nb_bins))
+        # x = torch.reshape(x, (self.batch_size, self.nb_bins, self.nb_bins))
 
         z = self.linear_encoder_layer_1(x)
         z = f.relu(z)
@@ -321,9 +316,7 @@ class ConfLinear(torch.nn.Module):
         z = f.relu(z)
         z = self.linear_encoder_layer_3(z)
         z = f.relu(z)
-        z = centralize_and_normalize_torch(
-            z, self.embedding_size, self.nb_bins, self.batch_size
-        )
+        z = centralize_and_normalize_torch(z)
         logits = f.relu(z)
         logits = self.linear_bin_layer(logits)  # added
         w = torch.cdist(z, z, p=2)
@@ -677,10 +670,9 @@ class TransConf(torch.nn.Module):
     """
 
     def __init__(
-        self,
+        self, *,
         nb_bins: int,
         embedding_size: int,
-        batch_size: int,
         num_bins_logits: int,
         zero_init: bool = True,
         nb_head: int = 2,
@@ -691,7 +683,6 @@ class TransConf(torch.nn.Module):
     ):
         self.nb_bins = nb_bins
         self.embedding_size = embedding_size
-        self.batch_size = batch_size
         self.zero_init = zero_init
         self.num_bins_logits = num_bins_logits
         self.nb_head = nb_head
@@ -733,15 +724,13 @@ class TransConf(torch.nn.Module):
             logits: predicted logits for belonging in each confidence bin
         """
 
-        x = torch.reshape(x, (self.batch_size, self.nb_bins, self.nb_bins))
         x = x.permute(1, 0, 2)
         z, emb = self.transformer_encoder(x)
         z = z.permute(1, 0, 2)
         emb = emb.permute(1, 0, 2)
 
-        z = centralize_and_normalize_torch(
-            z, self.embedding_size, self.nb_bins, self.batch_size
-        )
+        z = centralize_and_normalize_torch(z)
+
         logits = self.linear_bin_layer(emb)
         logits = f.relu(logits)
         logits = self.linear_bin_layer2(logits)

@@ -243,6 +243,9 @@ def generate_biological_structure(
     return centralize_and_normalize_numpy(stepper.trajectory[:nb_nodes])
 
 
+from typing import Optional
+
+
 def synthetic_biological_uniform_data_generator(
         n_structures: int,
         path_save: Path,
@@ -259,6 +262,7 @@ def synthetic_biological_uniform_data_generator(
         icing: bool = True,
         minmaxuse: bool = False,
         transportation: bool = True,
+        target_HiC: Optional[np.ndarray] = None,
         softmaxing: bool = False,
         aging_step: int = 30,
         nb_per_cluster: int = 30,
@@ -266,7 +270,6 @@ def synthetic_biological_uniform_data_generator(
     """Function that creates the dataset of structures, distance matrix and HIC matrices.
 
     Args:
-        trussart_hic: array of the trussart structure used as target for optimal transport
         n_structures: integer for how many structures to creates in the dataset
         path_save: constant path to locate where the data should be saved outside the package
         nb_bins: integer for the number of points in the structure (HIC bins)
@@ -282,14 +285,13 @@ def synthetic_biological_uniform_data_generator(
         icing: boolean that says if we are using ICE normalisation or not
         minmaxuse: boolean that says if we are using MinMax scaling or not
         transportation: boolean that says if we are unsing optimal transport or not
+        target_HiC: array of the HiC used as target for optimal transport
         softmaxing: boolean that says if we should use the softmax function over thwe HIC matrix.
         aging_step: an integer that determins the number of steps to take before a new cluster could be considered
         nb_point_cluster: integer that determines the number of points contained in each cluster
     """
 
     digits_format = "{0:0=4d}"
-    trussart = Trussart()
-    trussart_hic, _ = trussart.data
 
     # Create Dataset
     for i in tqdm(range(0, n_structures)):
@@ -344,7 +346,7 @@ def synthetic_biological_uniform_data_generator(
         # Compute HiC matrix
         hic_matrix = generate_hic(
             synthetic_biological_structure=synthetic_structure,
-            trussart_hic=trussart_hic,
+            target_HiC=target_HiC,
             use_ice=icing,
             use_minmax=minmaxuse,
             use_ot=transportation,

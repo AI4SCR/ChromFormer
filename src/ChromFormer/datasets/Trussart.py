@@ -1,5 +1,6 @@
 from pathlib import Path
 from torch.utils.data import Dataset
+from scipy.spatial import distance_matrix
 from dataset import BaseDataset, DownloadMixIn
 
 
@@ -28,7 +29,7 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
         super().__init__(force_download=force_download)
 
     def __getitem__(self, index):
-        return self.hic, self.structures[index], None
+        return self.hic, self.structures[index], self.distances[index]
 
     def __len__(self):
         return len(self.structures)
@@ -62,6 +63,7 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
             scaler = MinMaxScaler()
             trussart_hic = scaler.fit_transform(trussart_hic)
             trussart_structures = []
+            distances = []
 
             file_list = os.listdir(path_models_extracted)
             file_list = filter(lambda f: f.endswith(".xyz"), file_list)
@@ -73,6 +75,9 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
                 current_trussart_structure = current_trussart_structure[:, 1:]
                 trussart_structures.append(current_trussart_structure)
 
-        # TODO: What is the right way to handle the dataset?
+                # compute distance matrix
+                distances.append(distance_matrix(current_trussart_structure, current_trussart_structure))
+
         self.hic = trussart_hic
         self.structures = trussart_structures
+        self.distances = distances

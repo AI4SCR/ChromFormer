@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from scipy.spatial import distance_matrix
@@ -29,21 +31,22 @@ def compute_hic_matrix(distance_matrix: np.ndarray, alpha: int) -> np.ndarray:
 
 
 def generate_hic(
-    synthetic_biological_structure: np.ndarray,
-    trussart_hic: np.ndarray,
-    use_ice: bool = True,
-    use_minmax: bool = False,
-    use_ot: bool = True,
-    use_softmax: bool = False,
-    seed: int = 42,
-    plot_optimal_transport: bool = False,
-    exponent: int = 1,
+        synthetic_biological_structure: np.ndarray,
+        *,
+        target_HiC: Optional[np.ndarray] = None,
+        use_ice: bool = True,
+        use_minmax: bool = False,
+        use_ot: bool = True,
+        use_softmax: bool = False,
+        seed: int = 42,
+        plot_optimal_transport: bool = False,
+        exponent: int = 1,
 ):
     """This function is used to generate hic from a given structure matrix that depends on parameters
 
     Args:
         synthetic_biological_structure: array of the structure to use to generate an interaction matrix
-        trussart_hic: array of the trussart hic to use for optimal transport
+        target_HiC: array of the HiC to use for optimal transport
         use_ice: boolean that declares if ice normalisation should be used
         use_minmax: boolean that declares if minmax scaling should be used
         use_ot: boolean that declares if optimal transport should be used
@@ -71,9 +74,9 @@ def generate_hic(
     if use_ot:
         orig_hic = hic_matrix
         rng = np.random.RandomState(seed)
-        xs, xt, x1, x2 = ot_data(hic_matrix, trussart_hic, rng)
+        xs, xt, x1, x2 = ot_data(hic_matrix, target_HiC, rng)
         hic_matrix, i2te = transport(
-            xs, xt, x1, x2, hic_matrix.shape, trussart_hic.shape
+            xs, xt, x1, x2, hic_matrix.shape, target_HiC.shape
         )
 
     if use_softmax:

@@ -35,7 +35,7 @@ def save_structure(
     embedding_size: int,
     other_params: bool = False,
 ):
-    """Function that saves structures over epochs to be used later for gifs making
+    """Function that saves structures over epochs to be used later for gif making
 
     Args:
         model: model
@@ -66,8 +66,7 @@ def save_structure(
         trussart_pred_structure_superposed,
         trussart_true_structure_superposed,
     ) = kabsch_superimposition_numpy(
-        trussart_pred_structure, trussart_true_structure, embedding_size
-    )
+        trussart_pred_structure, trussart_true_structure)
 
     # Plot and compare the two structures
     x_pred = trussart_pred_structure_superposed[:, 0]

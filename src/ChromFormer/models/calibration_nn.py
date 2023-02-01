@@ -62,15 +62,17 @@ class ModelWithTemperature(torch.nn.Module):
         logits_list = []
         labels_list = []
         with torch.no_grad():
-            for data in valid_loader:
-                data = data.to(self.device)
+            for true_hic, true_structure, true_distance in valid_loader:
+                true_hic = true_hic.to(self.device)
+                true_structure = true_structure.to(self.device)
+                true_distance = true_distance.to(self.device)
 
-                pred_structure, pred_distance, logits = self.model(data.hic_matrix)
+                pred_structure, pred_distance, logits = self.model(true_hic)
                 pred_structure = pred_structure.detach().cpu()
 
-                true_hic = data.hic_matrix.detach().cpu()
-                true_structure = data.structure_matrix.detach().cpu()
-                true_distance = data.distance_matrix.detach().cpu()
+                true_hic = true_hic.detach().cpu()
+                true_structure = true_structure.detach().cpu()
+                true_distance = true_distance.detach().cpu()
 
                 true_structure = torch.reshape(
                     true_structure, (self.batch_size, self.nb_bins, self.embedding_size)

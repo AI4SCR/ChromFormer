@@ -127,39 +127,13 @@ class LitChromFormer(pylight.LightningModule):
         kabsch_loss = kabsch_loss_fct(pred_structures, true_structures, self.embedding_size, batch_size).numpy()
         kabsch_distance = []
         for pred_structure, true_structure in zip(pred_structures, true_structures):
-            kabsch_distance.append(kabsch_distance_numpy(pred_structure, true_structure, self.embedding_size))
+            kabsch_distance.append(kabsch_distance_numpy(pred_structure.numpy(), true_structure.numpy()))
         kabsch_distance = np.mean(kabsch_distance)
 
         # Distance loss
         distance_loss = self.distance_loss_fct(pred_distances, true_distances).numpy()
 
-        lddt_loss = loss_lddt(
-            pred_structures, true_structures, logits, self.num_bins_logits
-        )
-
-        # To numpy
-        true_hics = true_hics.numpy()
-
-        pred_structures = pred_structures.numpy()
-        true_structures = true_structures.numpy()
-
-        pred_distances = pred_distances.numpy()
-        true_distances = true_distances.numpy()
-
-        # # Format results
-        # true_hics = np.vstack(true_hics)
-        #
-        # pred_structures = np.vstack(pred_structures)
-        # true_structures = np.vstack(true_structures)
-        #
-        # pred_distances = np.vstack(pred_distances)
-        # true_distances = np.vstack(true_distances)
-        #
-        # # Compute mean losses
-        # mean_biological_loss = np.mean(np.asarray(biological_loss).flatten())
-        # mean_kabsch_loss = np.mean(np.asarray(kabsch_losses).flatten())
-        # mean_distance_loss = np.mean(np.asarray(distance_losses).flatten())
-        # mean_lddt_loss = np.mean(np.asarray(lddt_losses).flatten())
+        lddt_loss = loss_lddt(pred_structures, true_structures, logits, self.num_bins_logits)
 
         self.log("biological_loss", float(biological_loss))
         self.log("kabsch_loss", float(kabsch_loss))

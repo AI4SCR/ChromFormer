@@ -4,6 +4,7 @@ from pathlib import Path
 
 from ..generator import synthetic_biological_uniform_data_generator
 from ..io.import_utils import load_from_path_save
+from ..datasets.Trussart import Trussart
 
 # Data Generation relevant parameters
 DELTA = 0.45  # Smoothness parameter
@@ -29,7 +30,9 @@ class SyntheticDataset(Dataset):
     def __init__(self,
                  n_structures: int,
                  path_save: Path,
+                 force_generation: bool = True,
                  **kwargs):
+        self.force_generation = force_generation
         super().__init__()
 
         default_kwargs = dict(
@@ -46,6 +49,7 @@ class SyntheticDataset(Dataset):
             icing=ICING,
             minmaxuse=MINMAXUSE,
             transportation=TRANSPORTATION,
+            target_HiC=None,
             softmaxing=SOFTMAXING,
             aging_step=AGING_STEP,
             nb_per_cluster=NB_PER_CLUSTER)
@@ -59,11 +63,11 @@ class SyntheticDataset(Dataset):
         return self.kwargs['n_structures']
 
     def __getitem__(self, item):
-        return (self.transfer_learning_hics[item],
-                self.transfer_learning_structures[item],
-                self.transfer_learning_distances[item])
+        return (self.hics[item],
+                self.structures[item],
+                self.distances[item])
 
     def setup(self):
-        synthetic_biological_uniform_data_generator(**self.kwargs)
-        self.transfer_learning_hics, self.transfer_learning_structures, self.transfer_learning_distances = \
-            load_from_path_save(self.kwargs['path_save'])
+        if self.force_generation is True:
+            synthetic_biological_uniform_data_generator(**self.kwargs)
+        self.hics, self.structures, self.distances = load_from_path_save(self.kwargs['path_save'])

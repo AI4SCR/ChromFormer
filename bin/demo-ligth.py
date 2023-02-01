@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+
 # %%
+import re
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
-from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
 import os
 import random
 from pathlib import Path
+
+import pytorch_lightning as pylight
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 load_dotenv()
 
@@ -26,17 +30,9 @@ from ChromFormer.models import TransConf
 from ChromFormer.datasets import Trussart, SyntheticDataset
 from ChromFormer.generator import generate_hic
 from ChromFormer.io.export_utils import save_structure, make_gif
-
-from ChromFormer.Data_Tools.Data_Calculation import (
-    kabsch_superimposition_numpy,
-    kabsch_distance_numpy,
-    scale_logits,
-    mse_unscaled_scaled,
-)
-
-
+from ChromFormer.models.lightning_module import LitChromFormer
+from ChromFormer.metrics.metrics import kabsch_distance_numpy, kabsch_superimposition_numpy, scale_logits, mse_unscaled_scaled
 from ChromFormer.models.lddt_tools import lddt, get_confidence_metrics
-
 from ChromFormer.models.calibration_nn import (
     ModelWithTemperature,
     isotonic_calibration,
@@ -49,13 +45,14 @@ The following uses the package python-dotenv that can be installed by pip to loa
 """
 
 DATA_DIR = Path(os.environ.get("DATA_DIR"))
-DATA_PATH = (
-        DATA_DIR / "demo"
-)  # Folder to which the training and testing data will be saved.
+DATA_PATH = DATA_DIR / "demo"  # Folder to which the training and testing data will be saved.
 DATA_PATH.mkdir(exist_ok=True, parents=True)
 
-TRAIN_DATASET_SIZE = NB_TRAINING = 4  # training dataset size
-TEST_DATASET_SIZE = NB_testing = 2  # testing dataset size
+OUTPUT_DIR = Path(os.environ.get('OUTPUT_DIR')) / 'demo'
+OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
+
+TRAIN_DATASET_SIZE = NB_TRAINING = 200  # training dataset size
+TEST_DATASET_SIZE = NB_testing = 100  # testing dataset size
 NB_BINS = 202  # number of points per structure
 
 # Data Generation relevant parameters
@@ -82,8 +79,8 @@ SECD_HID = 48  # Second feedforward dimension of the transformer encoder
 ZERO_INIT = False  # Whether to use Zero Initialisation or Xavier initialisation for confidence logits linear layer weights
 NUM_BINS_LOGITS = 100  # Number of confidence logit classes
 NB_EPOCHS = 40
-BATCH_SIZE = 2
-ANGLE_PRED = EMBEDDING_SIZE = 3  # Simple 3D structure embedding dimension
+BATCH_SIZE = 10
+EMBEDDING_SIZE = 3  # Simple 3D structure embedding dimension
 LAMBDA_BIO = 0.1  # Biological loss weight
 LAMBDA_KABSCH = 0.1  # Kabsch loss weight
 LAMBDA_LDDT = 0.1  # LDDT confidence loss weight
@@ -124,7 +121,7 @@ fig = pl.structure_in_sphere(synthetic_biological_structure)
 
 # %% # Imports the trussart ground truth HiC used as a target distribution to match our generated HiCs.
 trussart = Trussart()
-trussart_hic, trussart_structures = trussart.data
+trussart_hic, trussart_structures, trussart_distances = trussart.hic, trussart.structures, trussart.distances
 
 # %% # HiC MATRIX GENERATION
 """
@@ -144,7 +141,7 @@ Parameters can be played with untils the desired ones are found.
 rng = np.random.RandomState(SEED)
 new_hic, orig_hic, Xs, Xt = generate_hic(
     synthetic_biological_structure,
-    trussart_hic,
+    target_HiC=trussart_hic,
     use_ice=True,
     use_minmax=True,
     use_ot=True,
@@ -169,8 +166,10 @@ The following section uses the desired parameters to output NB_TRAINING training
 """
 
 # generate synthetic data
-synthetic_train = SyntheticDataset(path_save=DATA_PATH / 'train', n_structures=NB_TRAINING, seed=SEED)
-synthetic_test = SyntheticDataset(path_save=DATA_PATH / 'test', n_structures=NB_testing, seed=SEED)
+synthetic_train = SyntheticDataset(path_save=OUTPUT_DIR / 'train', n_structures=NB_TRAINING,
+                                   target_HiC=trussart_hic, force_generation=True, seed=SEED)
+synthetic_test = SyntheticDataset(path_save=OUTPUT_DIR / 'test', n_structures=NB_testing,
+                                  target_HiC=trussart_hic, force_generation=True, seed=SEED)
 
 # %% Data Loader
 
@@ -181,7 +180,7 @@ train_loader = DataLoader(synthetic_train, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(synthetic_test, batch_size=BATCH_SIZE)
 
 test_frac = 0.2
-test_train_calib, test_test_calib = random_split(dataset=synthetic_test, lengths=[1-test_frac, test_frac],
+test_train_calib, test_test_calib = random_split(dataset=synthetic_test, lengths=[1 - test_frac, test_frac],
                                                  generator=torch.Generator().manual_seed(42))
 test_train_calib_loader = DataLoader(test_train_calib, batch_size=BATCH_SIZE)
 test_test_calib_loader = DataLoader(test_test_calib, batch_size=BATCH_SIZE)
@@ -193,7 +192,6 @@ trussart_loader = DataLoader(trussart, batch_size=BATCH_SIZE)
 """
 The device on which to run the model is first selected, then the model is declared with the following parameters:
     NB_BINS is the number of loci in the structure,
-    ANGLE_PRED is the same as the
     EMBEDDING_SIZE representing the 3d dimension embedding,
     NUM_BINS_LOGITS represents the number of confidence classes,
     ZERO_INIT decides whether to use a zero initialisation of the confidence learning weights or a Xavier initialisation
@@ -208,21 +206,24 @@ The device on which to run the model is first selected, then the model is declar
 distance_loss_fct = torch.nn.MSELoss()
 
 model = TransConf(
-    NB_BINS,
-    ANGLE_PRED,
-    BATCH_SIZE,
-    NUM_BINS_LOGITS,
-    ZERO_INIT,
-    NB_HEAD,
-    NB_HIDDEN,
-    NB_LAYERS,
-    DROPOUT,
-    SECD_HID,
-)
+    nb_bins=NB_BINS,
+    embedding_size=EMBEDDING_SIZE,
+    num_bins_logits=NUM_BINS_LOGITS,
+    zero_init=ZERO_INIT,
+    nb_head=NB_HEAD,
+    nb_hidden=NB_HIDDEN,
+    nb_layers=NB_LAYERS,
+    dropout=DROPOUT,
+    secd_hid=SECD_HID)
 
 # %% Training
-from ChromFormer.models.lightning_module import LitChromFormer
-import pytorch_lightning as pylight
+"""
+The following first trains the model with
+    LAMBDA_KABSCH and LAMBDA_BIO being the weights of the kabsch and biological losses.
+    LAMBDA_LDDT is the weight of the confidence loss.
+Then the model is evaluated with validation, testing and training results per epoch being stored in an array and being
+printed for the user to see.
+"""
 
 optimizer = torch.optim.AdamW
 optimizer_kwargs = dict(lr=0.0005, weight_decay=1e-5)
@@ -238,79 +239,86 @@ model_light = LitChromFormer(model=model,
                              lambda_lddt=LAMBDA_LDDT,
                              num_bins_logits=NUM_BINS_LOGITS)
 
-
-CKPT_PATH = DATA_PATH / 'checkpoints'
-trainer = pylight.Trainer(limit_train_batches=100, min_epochs=NB_EPOCHS, max_epochs=NB_EPOCHS,
-                          default_root_dir=str(CKPT_PATH))
+CKPT_PATH = OUTPUT_DIR / 'checkpoints'
+for ckpt in CKPT_PATH.glob(".ckpt"): ckpt.unlink()
+checkpoint_callback = ModelCheckpoint(dirpath=CKPT_PATH, save_top_k=-1, save_last=True)  # save model after every epoch
+trainer = pylight.Trainer(min_epochs=NB_EPOCHS, max_epochs=NB_EPOCHS, callbacks=[checkpoint_callback])
 
 trainer.fit(model=model_light, train_dataloaders=train_loader)
 
 test_dataloaders = {'train': train_loader, 'test': test_loader, 'trussart': trussart_loader}
-test_results = trainer.test(model=model_light, dataloaders=[train_loader, test_loader])
-# TODO: trussart_loader
-# test_results = dict(zip(test_dataloaders.keys(), test_results))
+test_results = trainer.test(model=model_light, dataloaders=[train_loader, test_loader, trussart_loader])
 
-# %%
-"""
-The following first trains the model with
-    LAMBDA_KABSCH and LAMBDA_BIO being the weights of the kabsch and biological losses.
-    LAMBDA_LDDT is the weight of the confidence loss.
-Then the model is evaluated with validation, testing and training results per epoch being stored in an array and being
-printed for the user to see.
-"""
+# %% Create GIF
+STRUCTURE_OUTPUT_PATH = OUTPUT_DIR / "images"
 
-STRUCTURE_OUTPUT_PATH = DATA_PATH / "images"
-for ckpt_path in CKPT_PATH.glob("*"):
-    epoch = ckpt_path.split('-')[0]
-    model = LitChromFormer.load_from_checkpoint(ckpt_path)
-    model.eval()
+for ckpt_path in CKPT_PATH.glob("*.ckpt"):
+    re_epoch_number = re.compile("epoch=([0-9]+)")
+    search = re_epoch_number.search(str(ckpt_path))
+    if search is None:
+        continue
+    epoch = int(search.groups()[0])
+
+    epoch_model = LitChromFormer.load_from_checkpoint(ckpt_path, model=model, distance_loss_fct=distance_loss_fct)
+
+    epoch_model.eval()
     save_structure(
         STRUCTURE_OUTPUT_PATH,
-        model,
+        epoch_model.model,
         epoch,
         trussart_structures,
         trussart_hic,
         NB_BINS,
         BATCH_SIZE,
         EMBEDDING_SIZE,
-        True,
-    )
+        True)
 
+# # Make a gif of the structure in time
+GIT_MODEL_TRAINING_PATH = OUTPUT_DIR / "gifs" / 'trussart_linear.gif'
+GIT_MODEL_TRAINING_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+make_gif(STRUCTURE_OUTPUT_PATH, GIT_MODEL_TRAINING_PATH)
 
 # %% best synthetically predicted structure
 """
-The Following takes one of the best synthetically predicted structure and plots it along with the true synthetic structure
+The Following takes one of the best synthetically predicted structure and plots it along with the true synthetic
+structure.
 """
+ckpt_path = CKPT_PATH / 'last.ckpt'
+last_model = LitChromFormer.load_from_checkpoint(ckpt_path, model=model, distance_loss_fct=distance_loss_fct)
+last_model.eval()
 
 kabsch_distances = []
+true_structures, pred_structures = [], []
+test_loader_bs1 = DataLoader(synthetic_test, batch_size=1)
+for batch in test_loader_bs1:
+    true_hic, true_structure, true_distance = batch
+    pred_structure, pred_distance, logits = last_model.model(true_hic)
 
-for graph_index in range(test_size):
-    test_true_structure = test_true_structures[graph_index, :, :]
-    test_pred_structure = test_pred_structures[graph_index, :, :]
+    pred_structure, pred_distance, logits = pred_structure.detach().numpy(), pred_distance.detach().numpy(), logits.detach().numpy()
+    pred_structure, pred_distance, logits = pred_structure.squeeze(), pred_distance.squeeze(), logits.squeeze()
+    true_structure = true_structure.numpy().squeeze()
 
-    d = kabsch_distance_numpy(test_pred_structure, test_true_structure, EMBEDDING_SIZE)
+    d = kabsch_distance_numpy(pred_structure, true_structure)
     kabsch_distances.append(d)
+    true_structures.append(true_structure)
+    pred_structures.append(pred_structure)
+
 sorted_kabsch = np.argsort(kabsch_distances)
-GRAPH_TESTED = sorted_kabsch[2]
+idx = sorted_kabsch[2]
 
-# %%
-test_true_structure = test_true_structures[GRAPH_TESTED]
-test_pred_structure = test_pred_structures[GRAPH_TESTED]
+true_structure = true_structures[idx]
+pred_structure = pred_structures[idx]
 
-(
-    test_pred_structure_superposed,
-    test_true_structure_superposed,
-) = kabsch_superimposition_numpy(
-    test_pred_structure, test_true_structure, EMBEDDING_SIZE
-)
+pred_structure_superposed, true_structure_superposed = kabsch_superimposition_numpy(pred_structure, true_structure)
 
-x_pred = test_pred_structure_superposed[:, 0]
-y_pred = test_pred_structure_superposed[:, 1]
-z_pred = test_pred_structure_superposed[:, 2]
+x_pred = pred_structure_superposed[:, 0]
+y_pred = pred_structure_superposed[:, 1]
+z_pred = pred_structure_superposed[:, 2]
 
-x_true = test_true_structure_superposed[:, 0]
-y_true = test_true_structure_superposed[:, 1]
-z_true = test_true_structure_superposed[:, 2]
+x_true = true_structure_superposed[:, 0]
+y_true = true_structure_superposed[:, 1]
+z_true = true_structure_superposed[:, 2]
 
 colorscale1 = np.asarray(range(len(x_true)))
 colorscale2 = np.asarray(range(len(x_pred)))
@@ -329,49 +337,37 @@ fig = pl.true_pred_structures(
     color1,
     color2,
 )
+fig.show(renderer='browser')
 
 # Shape comparison
-print(
-    "Kabsch distance is "
-    + str(
-        kabsch_distance_numpy(test_pred_structure, test_true_structure, EMBEDDING_SIZE)
-        / 3
-    )
-)
+print("Kabsch distance is " + str(kabsch_distance_numpy(pred_structure, true_structure) / 3))
 
-# %% # Make a gif of the structure in time
-GIT_MODEL_TRAINING_PATH = DATA_PATH / "gifs" / 'trussart_linear.gif'
-GIT_MODEL_TRAINING_PATH.mkdir(parents=True, exist_ok=True)
+# %% Trussart Prediction Visualisation
+"""
+Plot consensus Trussart against prediction 
+"""
 
-make_gif(STRUCTURE_OUTPUT_PATH, GIT_MODEL_TRAINING_PATH)
-
-# %% # Ground truth consensus Trussart structure plotted against the predicted one
-""""""
-# Trussart perfect structure
-trussart_true_structure = np.mean(trussart_structures, axis=0)
+trussart_consensus_structure = np.mean(trussart.structures, axis=0)
 
 # Trussart predicted structure
 torch_trussart_hic = torch.FloatTensor(trussart_hic)
-torch_trussart_hic = torch.reshape(torch_trussart_hic, (1, NB_BINS, NB_BINS))
-torch_trussart_hic = torch.repeat_interleave(torch_trussart_hic, BATCH_SIZE, 0)
+torch_trussart_hic = torch_trussart_hic[None,]
 
-trussart_pred_structure, trussart_pred_distance, trussart_pred_logits = model(
-    torch_trussart_hic
-)
-trussart_pred_structure = trussart_pred_structure.detach().numpy()[0]
+pred_structure, pred_distance, logits = last_model.model(torch_trussart_hic)
+pred_structure = pred_structure.detach().numpy().squeeze()
 
 # Superpose structure using Kabsch algorithm
-trussart_pred_structure_superposed, trussart_true_structure_superposed = kabsch_superimposition_numpy(
-    trussart_pred_structure, trussart_true_structure, EMBEDDING_SIZE)
+pred_structure_superposed, trussart_consensus_structure_superposed = kabsch_superimposition_numpy(pred_structure,
+                                                                                                  trussart_consensus_structure)
 
 # Plot and compare the two structures
-x_pred = trussart_pred_structure_superposed[:, 0]
-y_pred = trussart_pred_structure_superposed[:, 1]
-z_pred = trussart_pred_structure_superposed[:, 2]
+x_pred = pred_structure_superposed[:, 0]
+y_pred = pred_structure_superposed[:, 1]
+z_pred = pred_structure_superposed[:, 2]
 
-x_true = trussart_true_structure_superposed[:, 0]
-y_true = trussart_true_structure_superposed[:, 1]
-z_true = trussart_true_structure_superposed[:, 2]
+x_true = trussart_consensus_structure_superposed[:, 0]
+y_true = trussart_consensus_structure_superposed[:, 1]
+z_true = trussart_consensus_structure_superposed[:, 2]
 
 colorscale1 = np.asarray(range(len(x_true)))
 colorscale2 = np.asarray(range(len(x_pred)))
@@ -396,21 +392,19 @@ fig.show(renderer="browser")
 print(
     "Kabsch distance is "
     + str(
-        kabsch_distance_numpy(
-            trussart_pred_structure, trussart_true_structure, EMBEDDING_SIZE
-        )
+        kabsch_distance_numpy(pred_structure, trussart_consensus_structure)
     )
 )
 
 # %% # predicted and true lddt prediction confidence of the trussart structure
 confidence_metrics, pLLDTs = get_confidence_metrics(
-    trussart_pred_logits.detach().numpy()[0]
+    logits.detach().numpy()[0]
 )
 print(confidence_metrics)
 
 value = lddt(
-    torch.from_numpy(trussart_pred_structure_superposed).unsqueeze(0),
-    torch.from_numpy(trussart_true_structure_superposed).unsqueeze(0),
+    torch.from_numpy(pred_structure_superposed).unsqueeze(0),
+    torch.from_numpy(true_structure_superposed).unsqueeze(0),
     per_residue=True,
 )
 print(torch.mean(value))
@@ -419,27 +413,29 @@ print(torch.mean(value))
 """
 Temperature Scaling with predicted scaled confidences and the Mean Squared error of calibrated and uncalibrated confidences
 """
+orig_model = LitChromFormer.load_from_checkpoint(ckpt_path, model=model, distance_loss_fct=distance_loss_fct)
+orig_model.eval()
 
-orig_model = model
+device = 'cpu'
 valid_loader = test_train_calib_loader
 logits_test_temp, labels_test_temp = set_logits_data(
     test_test_calib_loader,
     device,
-    model,
+    last_model.model,
     BATCH_SIZE,
     NB_BINS,
     EMBEDDING_SIZE,
     NUM_BINS_LOGITS,
 )
 scaled_model = ModelWithTemperature(
-    orig_model, device, BATCH_SIZE, NB_BINS, EMBEDDING_SIZE, NUM_BINS_LOGITS
+    orig_model.model, device, BATCH_SIZE, NB_BINS, EMBEDDING_SIZE, NUM_BINS_LOGITS
 )
 scaled_model.set_temperature(valid_loader)
 m = torch.nn.LogSoftmax(dim=1)
 nll_criterion = torch.nn.BCEWithLogitsLoss()
 logits_test_temps_scaled = scaled_model.temperature_scale(logits_test_temp)
 confidence_metric_scaled, plddt_scaled = scale_logits(
-    trussart_pred_logits, scaled_model, BATCH_SIZE, NB_BINS
+    logits, scaled_model, NB_BINS
 )
 print(confidence_metric_scaled)
 mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, plddt_scaled)
@@ -455,14 +451,14 @@ valid_loader = test_train_calib_loader
 logits_test_temp, labels_test_temp = set_logits_data(
     test_train_calib_loader,
     device,
-    model,
+    last_model.model,
     BATCH_SIZE,
     NB_BINS,
     EMBEDDING_SIZE,
     NUM_BINS_LOGITS,
 )
 confidence_metric_iso, pLDDT_iso = isotonic_calibration(
-    logits_test_temp, labels_test_temp, trussart_pred_logits
+    logits_test_temp, labels_test_temp, logits
 )
 print(confidence_metric_iso)
 mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, pLDDT_iso)
@@ -478,14 +474,14 @@ valid_loader = test_train_calib_loader
 logits_test_temp, labels_test_temp = set_logits_data(
     test_train_calib_loader,
     device,
-    model,
+    last_model.model,
     BATCH_SIZE,
     NB_BINS,
     EMBEDDING_SIZE,
     NUM_BINS_LOGITS,
 )
 confidence_metric_beta, pLDDT_beta = beta_calibration(
-    logits_test_temp, labels_test_temp, trussart_pred_logits
+    logits_test_temp, labels_test_temp, logits
 )
 print(confidence_metric_beta)
 mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, pLDDT_beta)
