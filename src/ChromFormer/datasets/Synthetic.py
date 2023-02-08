@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import numpy as np
 from pathlib import Path
+from typing import Optional
 
 from ..generator import synthetic_biological_uniform_data_generator
 from ..io.import_utils import load_from_path_save
@@ -28,11 +29,12 @@ NB_PER_CLUSTER = 30
 class SyntheticDataset(Dataset):
 
     def __init__(self,
-                 n_structures: int,
-                 path_save: Path,
-                 force_generation: bool = True,
+                 n_structures: Optional[int] = None,
+                 path_save: Optional[Path] = None,
+                 path_load: Optional[Path] = None,
                  **kwargs):
-        self.force_generation = force_generation
+        self.path_load = path_load
+
         super().__init__()
 
         default_kwargs = dict(
@@ -60,7 +62,7 @@ class SyntheticDataset(Dataset):
         self.setup()
 
     def __len__(self):
-        return self.kwargs['n_structures']
+        return len(self.structures)
 
     def __getitem__(self, item):
         return (self.hics[item],
@@ -68,6 +70,8 @@ class SyntheticDataset(Dataset):
                 self.distances[item])
 
     def setup(self):
-        if self.force_generation is True:
+        if self.path_load:
+            self.hics, self.structures, self.distances = load_from_path_save(self.path_load)
+        else:
             synthetic_biological_uniform_data_generator(**self.kwargs)
-        self.hics, self.structures, self.distances = load_from_path_save(self.kwargs['path_save'])
+            self.hics, self.structures, self.distances = load_from_path_save(self.kwargs['path_save'])

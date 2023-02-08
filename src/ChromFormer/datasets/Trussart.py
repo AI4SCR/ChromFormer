@@ -2,7 +2,7 @@ from pathlib import Path
 from torch.utils.data import Dataset
 from scipy.spatial import distance_matrix
 from dataset import BaseDataset, DownloadMixIn
-
+from ..processing.normalisation import centralize_and_normalize_numpy
 
 class Trussart(Dataset, BaseDataset, DownloadMixIn):
     path = Path(
@@ -73,6 +73,7 @@ class Trussart(Dataset, BaseDataset, DownloadMixIn):
                     path_models_extracted / file_name, dtype="f", delimiter="\t"
                 )
                 current_trussart_structure = current_trussart_structure[:, 1:]
+                current_trussart_structure = centralize_and_normalize_numpy(current_trussart_structure)
                 trussart_structures.append(current_trussart_structure)
 
                 # compute distance matrix

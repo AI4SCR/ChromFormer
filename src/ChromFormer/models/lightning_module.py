@@ -3,6 +3,7 @@ import torch
 from .losses import biological_loss_fct, kabsch_loss_fct, kabsch_distance_numpy
 from .lddt_tools import loss_lddt
 import numpy as np
+from ..processing.normalisation import centralize_and_normalize_torch
 
 class LitChromFormer(pylight.LightningModule):
     def __init__(self,
@@ -54,7 +55,6 @@ class LitChromFormer(pylight.LightningModule):
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop.
         # it is independent of forward
-        self.model.train()
         batch_size = len(batch[0])
 
         # batch[0] := hic matrix
@@ -62,12 +62,6 @@ class LitChromFormer(pylight.LightningModule):
         # batch[2] := distance
         true_hic, true_structure, true_distance = batch
         pred_structure, pred_distance, logits = self.model(true_hic)
-
-        assert pred_structure.shape == true_structure.shape
-        assert pred_distance.shape == true_distance.shape
-
-        # TODO: Why reshape?
-        _pred_distance = pred_distance.reshape((batch_size * self.nb_bins, self.nb_bins))
 
         # Biological loss
         biological_loss = biological_loss_fct(
@@ -110,9 +104,6 @@ class LitChromFormer(pylight.LightningModule):
 
         pred_structures, pred_distances, logits = self.model(true_hics)
 
-        assert pred_structures.shape == true_structures.shape
-        assert pred_distances.shape == true_distances.shape
-
         # Biological loss
         biological_loss = biological_loss_fct(
             pred_structures,
@@ -125,10 +116,6 @@ class LitChromFormer(pylight.LightningModule):
 
         # Kabsch
         kabsch_loss = kabsch_loss_fct(pred_structures, true_structures, self.embedding_size, batch_size).numpy()
-        kabsch_distance = []
-        for pred_structure, true_structure in zip(pred_structures, true_structures):
-            kabsch_distance.append(kabsch_distance_numpy(pred_structure.numpy(), true_structure.numpy()))
-        kabsch_distance = np.mean(kabsch_distance)
 
         # Distance loss
         distance_loss = self.distance_loss_fct(pred_distances, true_distances).numpy()
@@ -137,7 +124,6 @@ class LitChromFormer(pylight.LightningModule):
 
         self.log("biological_loss", float(biological_loss))
         self.log("kabsch_loss", float(kabsch_loss))
-        self.log("kabsch_loss", float(kabsch_distance))
         self.log("distance_loss", float(distance_loss))
         self.log("lddt_losses", float(lddt_loss))
 

@@ -3,9 +3,8 @@ from typing import Optional
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from scipy.spatial import distance_matrix
-from ..utils.normalisation import ice
-from ..utils.optimal_transport import ot_data, transport
-
+from ..processing.normalisation import ice
+from ..processing.optimal_transport import ot_data, transport
 
 def compute_hic_matrix(distance_matrix: np.ndarray, alpha: int) -> np.ndarray:
     """Computes the distance to interaction calculation

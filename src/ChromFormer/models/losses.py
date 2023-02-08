@@ -4,50 +4,6 @@ import torch
 import numpy as np
 from ..metrics.metrics import kabsch_distance_numpy
 
-
-def compute_trussart_test_kabsch_loss(
-        trussart_hic,
-        trussart_structures,
-        model,
-        nb_bins,
-        batch_size,
-        embedding_size,
-        other_params=False,
-):
-    """Computes the kabsch distance between the trussart data and the synthetic data
-
-    Args:
-        trussart_hic: true trussart contact matrix
-        trussart_structures: true trussart structures
-        model: learnt model
-        nb_bins: number of loci
-        batch_size: size of the batch
-        embedding_size: 3D dimension
-        other_params: boolean to know if the model outputs more than 2 parameters
-
-    Returns:
-        The kabsch distance score
-    """
-    torch_trussart_hic = torch.FloatTensor(trussart_hic)
-    torch_trussart_hic = torch.reshape(torch_trussart_hic, (1, nb_bins, nb_bins))
-    torch_trussart_hic = torch.repeat_interleave(torch_trussart_hic, batch_size, 0)
-    if other_params:
-        trussart_pred_structure, _, _ = model(torch_trussart_hic)
-    else:
-        trussart_pred_structure, _ = model(torch_trussart_hic)
-    trussart_pred_structure = trussart_pred_structure.detach().numpy()[0]
-
-    kabsch_distances = []
-    for true_structure in trussart_structures:
-        kabsch_distances.append(
-            kabsch_distance_numpy(
-                trussart_pred_structure, true_structure, embedding_size
-            )
-        )
-
-    return np.mean(kabsch_distances)
-
-
 def biological_loss_fct(
         pred_structure, true_structure, pred_distance, true_distance, nb_bins, batch_size
 ):

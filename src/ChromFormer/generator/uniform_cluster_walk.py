@@ -12,8 +12,7 @@ from numpy import linalg as lanumpy
 from tqdm import tqdm
 from pathlib import Path
 
-from ..datasets import Trussart
-from ..utils.normalisation import centralize_and_normalize_numpy
+from ..processing.normalisation import centralize_and_normalize_numpy
 from .hiC import generate_hic
 
 from scipy.spatial import distance_matrix
