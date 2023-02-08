@@ -31,7 +31,8 @@ from ChromFormer.datasets import Trussart, SyntheticDataset
 from ChromFormer.generator import generate_hic
 from ChromFormer.io.export_utils import save_structure, make_gif
 from ChromFormer.models.lightning_module import LitChromFormer
-from ChromFormer.metrics.metrics import kabsch_distance_numpy, kabsch_superimposition_numpy, scale_logits, mse_unscaled_scaled
+from ChromFormer.metrics.metrics import kabsch_distance_numpy, kabsch_superimposition_numpy, scale_logits, \
+    mse_unscaled_scaled
 from ChromFormer.models.lddt_tools import lddt, get_confidence_metrics
 from ChromFormer.models.calibration_nn import (
     ModelWithTemperature,
@@ -41,7 +42,8 @@ from ChromFormer.models.calibration_nn import (
 
 # %% PARAMETERS
 """
-The following uses the package python-dotenv that can be installed by pip to load the variable that contains your path to the data folder in a .env file
+The following uses the package python-dotenv that can be installed by pip to load the variable that contains your path
+to the data folder in a .env file
 """
 
 DATA_DIR = Path(os.environ.get("DATA_DIR"))
@@ -117,7 +119,7 @@ synthetic_biological_structure = generate_biological_structure(
 )
 
 fig = pl.structure_in_sphere(synthetic_biological_structure)
-# fig.show(renderer="browser")
+fig.show(renderer="browser")
 
 # %% # Imports the trussart ground truth HiC used as a target distribution to match our generated HiCs.
 trussart = Trussart()
@@ -138,7 +140,6 @@ The following is an HiC generated using optimal transport with minmax and ICE no
 Parameters can be played with untils the desired ones are found.
 """
 
-rng = np.random.RandomState(SEED)
 new_hic, orig_hic, Xs, Xt = generate_hic(
     synthetic_biological_structure,
     target_HiC=trussart_hic,
@@ -166,10 +167,11 @@ The following section uses the desired parameters to output NB_TRAINING training
 """
 
 # generate synthetic data
-synthetic_train = SyntheticDataset(path_save=OUTPUT_DIR / 'train', n_structures=NB_TRAINING,
-                                   target_HiC=trussart_hic, force_generation=True, seed=SEED)
-synthetic_test = SyntheticDataset(path_save=OUTPUT_DIR / 'test', n_structures=NB_testing,
-                                  target_HiC=trussart_hic, force_generation=True, seed=SEED)
+path_load = Path(os.environ.get('DATA_DIR_OLD'), 'demo')
+synthetic_train = SyntheticDataset(path_load=path_load / 'train', path_save=OUTPUT_DIR / 'train', n_structures=NB_TRAINING,
+                                   target_HiC=trussart_hic, seed=SEED)
+synthetic_test = SyntheticDataset(path_load=path_load / 'test', path_save=OUTPUT_DIR / 'test', n_structures=NB_testing,
+                                  target_HiC=trussart_hic, seed=SEED)
 
 # %% Data Loader
 
@@ -242,10 +244,13 @@ model_light = LitChromFormer(model=model,
 CKPT_PATH = OUTPUT_DIR / 'checkpoints'
 for ckpt in CKPT_PATH.glob(".ckpt"): ckpt.unlink()
 checkpoint_callback = ModelCheckpoint(dirpath=CKPT_PATH, save_top_k=-1, save_last=True)  # save model after every epoch
-trainer = pylight.Trainer(min_epochs=NB_EPOCHS, max_epochs=NB_EPOCHS, callbacks=[checkpoint_callback])
+trainer = pylight.Trainer(min_epochs=NB_EPOCHS, max_epochs=NB_EPOCHS,
+                          default_root_dir=OUTPUT_DIR,
+                          callbacks=[checkpoint_callback])
 
 trainer.fit(model=model_light, train_dataloaders=train_loader)
 
+# %% Evaluation
 test_dataloaders = {'train': train_loader, 'test': test_loader, 'trussart': trussart_loader}
 test_results = trainer.test(model=model_light, dataloaders=[train_loader, test_loader, trussart_loader])
 
@@ -293,10 +298,9 @@ true_structures, pred_structures = [], []
 test_loader_bs1 = DataLoader(synthetic_test, batch_size=1)
 for batch in test_loader_bs1:
     true_hic, true_structure, true_distance = batch
-    pred_structure, pred_distance, logits = last_model.model(true_hic)
+    pred_structure, _, _ = last_model.model(true_hic)
 
-    pred_structure, pred_distance, logits = pred_structure.detach().numpy(), pred_distance.detach().numpy(), logits.detach().numpy()
-    pred_structure, pred_distance, logits = pred_structure.squeeze(), pred_distance.squeeze(), logits.squeeze()
+    pred_structure = pred_structure.detach().numpy().squeeze()
     true_structure = true_structure.numpy().squeeze()
 
     d = kabsch_distance_numpy(pred_structure, true_structure)
@@ -341,6 +345,7 @@ fig.show(renderer='browser')
 
 # Shape comparison
 print("Kabsch distance is " + str(kabsch_distance_numpy(pred_structure, true_structure) / 3))
+print('\n')
 
 # %% Trussart Prediction Visualisation
 """
@@ -353,12 +358,12 @@ trussart_consensus_structure = np.mean(trussart.structures, axis=0)
 torch_trussart_hic = torch.FloatTensor(trussart_hic)
 torch_trussart_hic = torch_trussart_hic[None,]
 
-pred_structure, pred_distance, logits = last_model.model(torch_trussart_hic)
+pred_structure, _, logits = last_model.model(torch_trussart_hic)
 pred_structure = pred_structure.detach().numpy().squeeze()
 
 # Superpose structure using Kabsch algorithm
-pred_structure_superposed, trussart_consensus_structure_superposed = kabsch_superimposition_numpy(pred_structure,
-                                                                                                  trussart_consensus_structure)
+pred_structure_superposed, trussart_consensus_structure_superposed = \
+    kabsch_superimposition_numpy(pred_structure, trussart_consensus_structure)
 
 # Plot and compare the two structures
 x_pred = pred_structure_superposed[:, 0]
@@ -395,8 +400,9 @@ print(
         kabsch_distance_numpy(pred_structure, trussart_consensus_structure)
     )
 )
+print('\n')
 
-# %% # predicted and true lddt prediction confidence of the trussart structure
+# predicted and true lddt prediction confidence of the trussart structure
 confidence_metrics, pLLDTs = get_confidence_metrics(
     logits.detach().numpy()[0]
 )
@@ -408,6 +414,7 @@ value = lddt(
     per_residue=True,
 )
 print(torch.mean(value))
+print('\n')
 
 # %% # Temperature Scaling
 """
@@ -441,6 +448,7 @@ print(confidence_metric_scaled)
 mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, plddt_scaled)
 print(mse_unscalled)
 print(mse_scalled)
+print('\n')
 
 # %% # Isotonic Regression Calibration
 """
@@ -464,6 +472,7 @@ print(confidence_metric_iso)
 mse_unscalled, mse_scalled = mse_unscaled_scaled(value, pLLDTs, pLDDT_iso)
 print(mse_unscalled)
 print(mse_scalled)
+print('\n')
 
 # %% # Beta Calibration
 """
